@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import type { FileEntry } from '../hooks/useFolderBrowser';
+import { ImagePreview } from './ImagePreview';
 
 type Props = {
   title: string;
@@ -7,9 +8,17 @@ type Props = {
   loading: boolean;
   error: string | null;
   onItemClick: (entry: FileEntry) => void;
+  folderPath?: string;
 };
 
-export function FileList({ title, items, loading, error, onItemClick }: Props) {
+export function FileList({
+  title,
+  items,
+  loading,
+  error,
+  onItemClick,
+  folderPath,
+}: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +98,9 @@ export function FileList({ title, items, loading, error, onItemClick }: Props) {
           <div className="flex flex-wrap gap-1 justify-start">
             {items.map((item, index) => {
               const isSelected = index === selectedIndex;
+              const isImage = item.type === 'image';
+              const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
+
               return (
                 <div
                   key={item.name}
@@ -103,11 +115,23 @@ export function FileList({ title, items, loading, error, onItemClick }: Props) {
                     onItemClick(item);
                   }}
                 >
-                  {/* Icon */}
-                  <div className="flex items-center justify-center mb-0.5 w-10 h-10 shrink-0">
-                    <span className="text-2xl leading-none">
-                      {item.type === 'folder' ? '📁' : '🖼️'}
-                    </span>
+                  {/* Icon / Image preview */}
+                  <div
+                    className={`flex items-center justify-center mb-0.5 shrink-0 ${
+                      isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
+                    }`}
+                  >
+                    {isImage && imagePath ? (
+                      <ImagePreview
+                        imagePath={imagePath}
+                        imageName={item.name}
+                        className="w-full h-full rounded-sm border border-slate-700"
+                      />
+                    ) : (
+                      <span className="text-2xl leading-none">
+                        {item.type === 'folder' ? '📁' : '🖼️'}
+                      </span>
+                    )}
                   </div>
                   {/* Name */}
                   <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">

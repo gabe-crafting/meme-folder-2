@@ -66,6 +66,7 @@ function App() {
                     items={images}
                     loading={loading}
                     error={null}
+                    folderPath={folderPath}
                     onItemClick={() => {
                         // no-op for now; navigation only for folders
                     }}
