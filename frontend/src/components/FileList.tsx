@@ -1,0 +1,125 @@
+import React, { useEffect, useState, useRef } from 'react';
+import type { FileEntry } from '../hooks/useFolderBrowser';
+
+type Props = {
+  title: string;
+  items: FileEntry[];
+  loading: boolean;
+  error: string | null;
+  onItemClick: (entry: FileEntry) => void;
+};
+
+export function FileList({ title, items, loading, error, onItemClick }: Props) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectedItemRef = useRef<HTMLDivElement>(null);
+
+  // Reset selection when items change
+  useEffect(() => {
+    if (items.length > 0) {
+      setSelectedIndex(0);
+    } else {
+      setSelectedIndex(null);
+    }
+  }, [items]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (selectedItemRef.current) {
+      selectedItemRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    }
+  }, [selectedIndex]);
+
+  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    if (!items.length) return;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => {
+        if (prev === null) return 0;
+        return Math.min(prev + 1, items.length - 1);
+      });
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => {
+        if (prev === null) return 0;
+        return Math.max(prev - 1, 0);
+      });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSelectedIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setSelectedIndex(items.length - 1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex !== null) {
+        onItemClick(items[selectedIndex]);
+      }
+    }
+  };
+
+  return (
+    <section className="flex-1 flex flex-col min-h-0 bg-slate-950/50">
+      {/* Header bar */}
+      <div className="px-4 py-2 text-xs font-medium text-slate-300 border-b border-slate-800 bg-slate-900/80">
+        {title}
+      </div>
+      {/* Scrollable grid area */}
+      <div
+        className="flex-1 overflow-auto outline-none bg-slate-950/30"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+      >
+        {error && (
+          <div className="mb-2 text-xs text-red-400 px-4 py-2">
+            {error}
+          </div>
+        )}
+        {items.length === 0 && !loading && !error && (
+          <div className="px-4 py-8 text-xs text-slate-500 text-center">
+            (Empty)
+          </div>
+        )}
+        {/* Flex layout similar to Windows 10 File Explorer medium icons */}
+        <div className="p-1">
+          <div className="flex flex-wrap gap-1 justify-start">
+            {items.map((item, index) => {
+              const isSelected = index === selectedIndex;
+              return (
+                <div
+                  key={item.name}
+                  ref={isSelected ? selectedItemRef : null}
+                  className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
+                    isSelected
+                      ? 'bg-blue-500/80 text-white shadow-md'
+                      : 'text-slate-200 hover:bg-slate-700/60'
+                  }`}
+                  onClick={() => {
+                    setSelectedIndex(index);
+                    onItemClick(item);
+                  }}
+                >
+                  {/* Icon */}
+                  <div className="flex items-center justify-center mb-0.5 w-10 h-10 shrink-0">
+                    <span className="text-2xl leading-none">
+                      {item.type === 'folder' ? '📁' : '🖼️'}
+                    </span>
+                  </div>
+                  {/* Name */}
+                  <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
+                    {item.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
