@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import Masonry from 'react-masonry-css';
 import {
   Accordion,
   AccordionContent,
@@ -77,58 +78,7 @@ export function FileList({
   showTags = true,
   onShowTagsChange,
 }: Props) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const selectedItemRef = useRef<HTMLDivElement>(null);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
-
-  // Reset selection when items change
-  useEffect(() => {
-    if (items.length > 0) {
-      setSelectedIndex(0);
-    } else {
-      setSelectedIndex(null);
-    }
-  }, [items]);
-
-  // Scroll selected item into view
-  useEffect(() => {
-    if (selectedItemRef.current) {
-      selectedItemRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest',
-      });
-    }
-  }, [selectedIndex]);
-
-  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
-    if (!items.length) return;
-
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => {
-        if (prev === null) return 0;
-        return Math.min(prev + 1, items.length - 1);
-      });
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => {
-        if (prev === null) return 0;
-        return Math.max(prev - 1, 0);
-      });
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      setSelectedIndex(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      setSelectedIndex(items.length - 1);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedIndex !== null) {
-        onItemClick(items[selectedIndex]);
-      }
-    }
-  };
 
   const handleCopyPath = (item: FileEntry) => {
     if (folderPath) {
@@ -153,53 +103,91 @@ export function FileList({
   };
 
   const renderItem = (item: FileEntry, index: number) => {
-    const isSelected = index === selectedIndex;
     const isImage = item.type === 'image';
     const isVideo = item.type === 'video';
     const isMedia = isImage || isVideo;
     const mediaPath = folderPath ? `${folderPath}\\${item.name}` : '';
 
+    // Folders use simple icon + name layout
+    if (item.type === 'folder') {
+      const itemContent = (
+        <div
+          className="flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] text-foreground hover:bg-accent hover:text-accent-foreground"
+          onClick={() => {
+            onItemClick(item);
+          }}
+        >
+          <div className="flex items-center justify-center mb-0.5 w-10 h-10 shrink-0">
+            <span className="text-2xl leading-none">📁</span>
+          </div>
+          <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
+            {item.name}
+          </span>
+        </div>
+      );
+
+      return (
+        <ContextMenu key={item.name}>
+          <ContextMenuTrigger asChild>{itemContent}</ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => onItemClick(item)}>
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Open Folder
+            </ContextMenuItem>
+            {onAddFavorite && folderPath && (
+              <>
+                <ContextMenuSeparator />
+                <ContextMenuItem 
+                  onClick={() => {
+                    const fullPath = `${folderPath}\\${item.name}`;
+                    onAddFavorite(fullPath);
+                  }}
+                  disabled={isFavorite && folderPath ? isFavorite(`${folderPath}\\${item.name}`) : false}
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  {isFavorite && folderPath && isFavorite(`${folderPath}\\${item.name}`) 
+                    ? 'Already in Favorites' 
+                    : 'Add to Favorites'}
+                </ContextMenuItem>
+              </>
+            )}
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleCopyName(item)}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Name
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleCopyPath(item)}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Path
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      );
+    }
+
+    // Media items (images/videos) use masonry with no names
     const itemContent = (
       <div
-        ref={isSelected ? selectedItemRef : null}
-        className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
-          isSelected
-            ? 'bg-primary/90 text-primary-foreground shadow-md'
-            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-        }`}
+        className="cursor-pointer rounded transition-all overflow-hidden hover:ring-2 hover:ring-accent"
         onClick={() => {
-          setSelectedIndex(index);
           onItemClick(item);
         }}
+        title={item.name}
       >
-        {/* Icon / Media preview */}
-        <div
-          className={`flex items-center justify-center mb-0.5 shrink-0 ${
-            isMedia ? 'w-[72px] h-[72px]' : 'w-10 h-10'
-          }`}
-        >
-          {isImage && mediaPath ? (
-            <ImagePreview
-              imagePath={mediaPath}
-              imageName={item.name}
-              className="w-full h-full rounded-sm border border-border"
-            />
-          ) : isVideo && mediaPath ? (
-            <VideoPreview
-              videoPath={mediaPath}
-              videoName={item.name}
-              className="w-full h-full rounded-sm border border-border"
-            />
-          ) : (
-            <span className="text-2xl leading-none">
-              {item.type === 'folder' ? '📁' : '🖼️'}
-            </span>
-          )}
-        </div>
-        {/* Name */}
-        <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
-          {item.name}
-        </span>
+        {/* Media preview */}
+        {isImage && mediaPath ? (
+          <ImagePreview
+            imagePath={mediaPath}
+            imageName={item.name}
+            className="w-full h-auto max-w-full rounded-sm border border-border"
+          />
+        ) : isVideo && mediaPath ? (
+          <VideoPreview
+            videoPath={mediaPath}
+            videoName={item.name}
+            className="w-full h-auto max-w-full rounded-sm border border-border"
+          />
+        ) : null}
       </div>
     );
 
@@ -289,8 +277,6 @@ export function FileList({
           <AccordionContent className="pb-0">
             <div
               className="overflow-auto outline-none bg-background max-h-[300px]"
-              tabIndex={0}
-              onKeyDown={handleKeyDown}
             >
               {error && (
                 <div className="mb-2 text-xs text-destructive px-4 py-2">
@@ -302,9 +288,9 @@ export function FileList({
                   (Empty)
                 </div>
               )}
-              {/* Flex layout similar to Windows 10 File Explorer medium icons */}
+              {/* Simple flex layout for folders */}
               <div className="p-1 w-full">
-                <div className="flex flex-wrap gap-1 justify-start w-full">
+                <div className="flex flex-wrap gap-1 w-full">
                   {items.map((item, index) => renderItem(item, index))}
                 </div>
               </div>
@@ -407,8 +393,6 @@ export function FileList({
       {/* Scrollable grid area */}
       <div
         className="flex-1 overflow-auto outline-none bg-background"
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
       >
         {error && (
           <div className="mb-2 text-xs text-destructive px-4 py-2">
@@ -420,11 +404,22 @@ export function FileList({
             (Empty)
           </div>
         )}
-        {/* Flex layout similar to Windows 10 File Explorer medium icons */}
+        {/* Masonry layout for media */}
         <div className="p-1 w-full">
-          <div className="flex flex-wrap gap-1 justify-start w-full">
+          <Masonry
+            breakpointCols={{
+              default: 6,
+              1536: 5,
+              1280: 4,
+              1024: 3,
+              768: 2,
+              640: 1
+            }}
+            className="flex gap-2 w-full"
+            columnClassName="flex flex-col gap-2"
+          >
             {items.map((item, index) => renderItem(item, index))}
-          </div>
+          </Masonry>
         </div>
       </div>
     </section>

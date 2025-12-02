@@ -52,14 +52,14 @@ export function ImagePreview({ imagePath, imageName, className = '' }: Props) {
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+        <div className="absolute inset-0 flex items-center justify-center bg-muted min-h-[100px]">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-border border-t-muted-foreground"></div>
         </div>
       )}
       <img
         src={imageUrl}
         alt={imageName}
-        className="w-full h-full object-cover"
+        className="w-full h-auto object-contain"
         onLoad={() => setLoading(false)}
         onError={() => {
           setError(true);

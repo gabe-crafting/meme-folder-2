@@ -130,13 +130,13 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
 
   if (!isVisible) {
     return (
-      <div ref={containerRef} className={`flex items-center justify-center bg-muted ${className}`} />
+      <div ref={containerRef} className={`flex items-center justify-center bg-muted min-h-[150px] ${className}`} />
     );
   }
 
   if (error || (!thumbnail && !loading)) {
     return (
-      <div ref={containerRef} className={`relative flex items-center justify-center bg-muted ${className}`}>
+      <div ref={containerRef} className={`relative flex items-center justify-center bg-muted min-h-[150px] ${className}`}>
         <span className="text-3xl leading-none">🎬</span>
         <div className="absolute bottom-0 right-0 bg-background/80 px-1 rounded-tl text-[8px] leading-tight">
           VIDEO
@@ -146,7 +146,7 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
   }
 
   return (
-    <div ref={containerRef} className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative min-h-[150px] ${className}`}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-border border-t-muted-foreground"></div>
@@ -168,7 +168,7 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
           <img
             src={thumbnail}
             alt={videoName}
-            className="w-full h-full object-cover"
+            className="w-full h-auto object-contain"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center shadow-md">
