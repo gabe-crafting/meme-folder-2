@@ -37,13 +37,13 @@ export function ImagePreview({ imagePath, imageName, className = '' }: Props) {
 
   if (!isVisible) {
     return (
-      <div ref={containerRef} className={`flex items-center justify-center bg-slate-800 ${className}`} />
+      <div ref={containerRef} className={`flex items-center justify-center bg-muted ${className}`} />
     );
   }
 
   if (error) {
     return (
-      <div ref={containerRef} className={`flex items-center justify-center bg-slate-800 ${className}`}>
+      <div ref={containerRef} className={`flex items-center justify-center bg-muted ${className}`}>
         <span className="text-2xl leading-none">🖼️</span>
       </div>
     );
@@ -52,8 +52,8 @@ export function ImagePreview({ imagePath, imageName, className = '' }: Props) {
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-          <div className="animate-spin rounded-full h-6 w-6 border-2 border-slate-600 border-t-slate-400"></div>
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-border border-t-muted-foreground"></div>
         </div>
       )}
       <img

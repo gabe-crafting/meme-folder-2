@@ -20,9 +20,9 @@ function App() {
     const images = items.filter((item) => item.type === 'image');
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100">
+        <div className="min-h-screen flex flex-col bg-background text-foreground">
             {/* Top bar / title */}
-            <header className="px-4 py-2 border-b border-slate-800">
+            <header className="px-4 py-2 border-b border-border bg-card">
                 <h1 className="text-sm font-semibold">meme-folder-</h1>
             </header>
 
@@ -60,7 +60,7 @@ function App() {
                         }
                     }}
                 />
-                <div className="border-t border-slate-800" />
+                <div className="border-t border-border" />
                 <FileList
                     title="Images"
                     items={images}

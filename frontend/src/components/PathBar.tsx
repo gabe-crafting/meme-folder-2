@@ -1,4 +1,7 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, FolderOpen } from 'lucide-react';
 
 type Props = {
   folderPath: string;
@@ -18,8 +21,19 @@ export function PathBar({
   canGoBack,
 }: Props) {
   return (
-    <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-2">
-      <input
+    <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+      <Button
+        type="button"
+        onClick={onBack}
+        variant="outline"
+        size="icon"
+        disabled={loading || !canGoBack}
+        title="Go up one level"
+        className="shrink-0"
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
+      <Input
         type="text"
         value={folderPath}
         onChange={(e) => setFolderPath(e.target.value)}
@@ -28,26 +42,18 @@ export function PathBar({
             onOpen();
           }
         }}
-        className="flex-1 rounded-md border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         placeholder="C:\Users\gabe\Desktop\notes"
+        className="flex-1"
       />
-      <button
+      <Button
         type="button"
         onClick={onOpen}
-        className="shrink-0 inline-flex items-center rounded-md bg-indigo-500 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-400 disabled:opacity-40"
         disabled={loading}
+        className="shrink-0"
       >
+        <FolderOpen className="h-4 w-4 mr-2" />
         {loading ? 'Reading…' : 'Open'}
-      </button>
-      <button
-        type="button"
-        onClick={onBack}
-        className="shrink-0 inline-flex items-center rounded-md border border-slate-700 bg-slate-800 px-2 py-2 text-xs font-medium text-slate-100 hover:bg-slate-700 disabled:opacity-40"
-        disabled={loading || !canGoBack}
-        title="Go up one level"
-      >
-        ←
-      </button>
+      </Button>
     </div>
   );
 }

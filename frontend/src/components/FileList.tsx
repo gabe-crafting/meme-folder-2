@@ -72,24 +72,24 @@ export function FileList({
   };
 
   return (
-    <section className="flex-1 flex flex-col min-h-0 bg-slate-950/50">
+    <section className="flex-1 flex flex-col min-h-0 bg-card/30">
       {/* Header bar */}
-      <div className="px-4 py-2 text-xs font-medium text-slate-300 border-b border-slate-800 bg-slate-900/80">
+      <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border bg-card/80">
         {title}
       </div>
       {/* Scrollable grid area */}
       <div
-        className="flex-1 overflow-auto outline-none bg-slate-950/30"
+        className="flex-1 overflow-auto outline-none bg-background"
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
         {error && (
-          <div className="mb-2 text-xs text-red-400 px-4 py-2">
+          <div className="mb-2 text-xs text-destructive px-4 py-2">
             {error}
           </div>
         )}
         {items.length === 0 && !loading && !error && (
-          <div className="px-4 py-8 text-xs text-slate-500 text-center">
+          <div className="px-4 py-8 text-xs text-muted-foreground text-center">
             (Empty)
           </div>
         )}
@@ -107,8 +107,8 @@ export function FileList({
                   ref={isSelected ? selectedItemRef : null}
                   className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
                     isSelected
-                      ? 'bg-blue-500/80 text-white shadow-md'
-                      : 'text-slate-200 hover:bg-slate-700/60'
+                      ? 'bg-primary/90 text-primary-foreground shadow-md'
+                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                   onClick={() => {
                     setSelectedIndex(index);
@@ -125,7 +125,7 @@ export function FileList({
                       <ImagePreview
                         imagePath={imagePath}
                         imageName={item.name}
-                        className="w-full h-full rounded-sm border border-slate-700"
+                        className="w-full h-full rounded-sm border border-border"
                       />
                     ) : (
                       <span className="text-2xl leading-none">
