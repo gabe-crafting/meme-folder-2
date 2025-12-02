@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import type { FileEntry } from '../hooks/useFolderBrowser';
 import { ImagePreview } from './ImagePreview';
+import { VideoPreview } from './VideoPreview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Accordion,
   AccordionContent,
@@ -31,6 +34,7 @@ type Props = {
   selectedTags?: Set<string>;
   onToggleTag?: (tag: string) => void;
   totalItemCount?: number;
+  allTags?: Record<string, string[]>; // All tags for checking untagged items
   // Collapsible props
   collapsible?: boolean;
   defaultCollapsed?: boolean;
@@ -40,6 +44,9 @@ type Props = {
   // Current folder favorite toggle (for Images section)
   onToggleFavorite?: () => void;
   isCurrentFolderFavorite?: boolean;
+  // Untagged filter
+  showOnlyUntagged?: boolean;
+  onToggleUntagged?: (value: boolean) => void;
 };
 
 export function FileList({
@@ -53,15 +60,19 @@ export function FileList({
   selectedTags,
   onToggleTag,
   totalItemCount,
+  allTags,
   collapsible = false,
   defaultCollapsed = false,
   onAddFavorite,
   isFavorite,
   onToggleFavorite,
   isCurrentFolderFavorite,
+  showOnlyUntagged,
+  onToggleUntagged,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
 
   // Reset selection when items change
   useEffect(() => {
@@ -137,7 +148,9 @@ export function FileList({
   const renderItem = (item: FileEntry, index: number) => {
     const isSelected = index === selectedIndex;
     const isImage = item.type === 'image';
-    const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
+    const isVideo = item.type === 'video';
+    const isMedia = isImage || isVideo;
+    const mediaPath = folderPath ? `${folderPath}\\${item.name}` : '';
 
     const itemContent = (
       <div
@@ -152,16 +165,22 @@ export function FileList({
           onItemClick(item);
         }}
       >
-        {/* Icon / Image preview */}
+        {/* Icon / Media preview */}
         <div
           className={`flex items-center justify-center mb-0.5 shrink-0 ${
-            isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
+            isMedia ? 'w-[72px] h-[72px]' : 'w-10 h-10'
           }`}
         >
-          {isImage && imagePath ? (
+          {isImage && mediaPath ? (
             <ImagePreview
-              imagePath={imagePath}
+              imagePath={mediaPath}
               imageName={item.name}
+              className="w-full h-full rounded-sm border border-border"
+            />
+          ) : isVideo && mediaPath ? (
+            <VideoPreview
+              videoPath={mediaPath}
+              videoName={item.name}
               className="w-full h-full rounded-sm border border-border"
             />
           ) : (
@@ -220,7 +239,7 @@ export function FileList({
             <>
               <ContextMenuItem onClick={() => onItemClick(item)}>
                 <Tag className="mr-2 h-4 w-4" />
-                Open & Tag
+                {item.type === 'video' ? 'Open & Tag Video' : 'Open & Tag'}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => void handleOpenInExplorer(item)}>
                 <ExternalLink className="mr-2 h-4 w-4" />
@@ -267,8 +286,8 @@ export function FileList({
                 </div>
               )}
               {/* Flex layout similar to Windows 10 File Explorer medium icons */}
-              <div className="p-1">
-                <div className="flex flex-wrap gap-1 justify-start">
+              <div className="p-1 w-full">
+                <div className="flex flex-wrap gap-1 justify-start w-full">
                   {items.map((item, index) => renderItem(item, index))}
                 </div>
               </div>
@@ -284,7 +303,7 @@ export function FileList({
     <section className="flex-1 flex flex-col min-h-0 bg-card/30">
       {/* Header bar */}
       <div className="px-4 py-2 border-b border-border bg-card/80">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             {onToggleFavorite && (
               <Button
@@ -299,29 +318,60 @@ export function FileList({
             )}
             <span className="text-xs font-medium text-muted-foreground">{title}</span>
           </div>
-          {selectedTags && selectedTags.size > 0 && totalItemCount && (
-            <span className="text-xs text-muted-foreground">
-              ({items.length} of {totalItemCount})
-            </span>
-          )}
+          
+          <div className="flex items-center gap-2">
+            {selectedTags && selectedTags.size > 0 && totalItemCount && (
+              <span className="text-xs text-muted-foreground">
+                ({items.length} of {totalItemCount})
+              </span>
+            )}
+            
+            {/* Untagged filter switch */}
+            {onToggleUntagged && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showOnlyUntagged || false}
+                  onCheckedChange={onToggleUntagged}
+                  className="scale-75"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Untagged only</span>
+              </div>
+            )}
+            
+            {/* Tag search input */}
+            {uniqueTags && uniqueTags.length > 0 && (
+              <Input
+                type="text"
+                placeholder="Search tags..."
+                value={tagSearchQuery}
+                onChange={(e) => setTagSearchQuery(e.target.value)}
+                className="h-7 w-32 text-xs"
+              />
+            )}
+          </div>
         </div>
         
         {/* Tag filter (only shown if tags are provided) */}
         {uniqueTags && uniqueTags.length > 0 && onToggleTag && selectedTags && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {uniqueTags.map((tag) => {
-              const isSelected = selectedTags.has(tag);
-              return (
-                <Badge
-                  key={tag}
-                  variant={isSelected ? "default" : "outline"}
-                  className="cursor-pointer transition-all text-xs"
-                  onClick={() => onToggleTag(tag)}
-                >
-                  {tag}
-                </Badge>
-              );
-            })}
+            {uniqueTags
+              .filter(tag => 
+                tagSearchQuery === '' || 
+                tag.toLowerCase().includes(tagSearchQuery.toLowerCase())
+              )
+              .map((tag) => {
+                const isSelected = selectedTags.has(tag);
+                return (
+                  <Badge
+                    key={tag}
+                    variant={isSelected ? "default" : "outline"}
+                    className="cursor-pointer transition-all text-xs"
+                    onClick={() => onToggleTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                );
+              })}
           </div>
         )}
       </div>
@@ -342,8 +392,8 @@ export function FileList({
           </div>
         )}
         {/* Flex layout similar to Windows 10 File Explorer medium icons */}
-        <div className="p-1">
-          <div className="flex flex-wrap gap-1 justify-start">
+        <div className="p-1 w-full">
+          <div className="flex flex-wrap gap-1 justify-start w-full">
             {items.map((item, index) => renderItem(item, index))}
           </div>
         </div>

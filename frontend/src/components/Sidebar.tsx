@@ -4,6 +4,7 @@ import type { Favorite } from '../hooks/useFavorites';
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -13,6 +14,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { Settings } from './Settings';
 
 type Props = {
   favorites: Favorite[];
@@ -76,6 +78,9 @@ export function Sidebar({ favorites, onNavigate, onRemove, currentPath }: Props)
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <Settings />
+      </SidebarFooter>
     </ShadcnSidebar>
   );
 }

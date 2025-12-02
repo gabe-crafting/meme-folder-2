@@ -41,7 +41,7 @@ func main() {
 	}
 }
 
-// serveImageMiddleware is a middleware that serves images from local filesystem
+// serveImageMiddleware is a middleware that serves images and videos from local filesystem
 func serveImageMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if request is for /wails-image/
@@ -60,11 +60,36 @@ func serveImageMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			// Check if file exists
+			// Check if file exists and get size
 			info, err := os.Stat(filePath)
 			if err != nil || info.IsDir() {
 				http.Error(w, "File not found", http.StatusNotFound)
 				return
+			}
+
+			// Get settings to check file size limits
+			settings, err := (&App{}).GetSettings()
+			if err != nil {
+				settings = defaultSettings
+			}
+
+			// Determine file type and check size limit
+			ext := strings.ToLower(filepath.Ext(filePath))
+			fileSizeMB := float64(info.Size()) / (1024 * 1024)
+			isVideo := false
+
+			switch ext {
+			case ".mp4", ".webm", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".m4v":
+				isVideo = true
+				if fileSizeMB > float64(settings.VideoMemoryLimitMB) {
+					http.Error(w, "Video file too large", http.StatusRequestEntityTooLarge)
+					return
+				}
+			case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp":
+				if fileSizeMB > float64(settings.ImageMemoryLimitMB) {
+					http.Error(w, "Image file too large", http.StatusRequestEntityTooLarge)
+					return
+				}
 			}
 
 			// Open and serve the file
@@ -76,21 +101,40 @@ func serveImageMiddleware(next http.Handler) http.Handler {
 			defer file.Close()
 
 			// Set content type based on extension
-			ext := strings.ToLower(filepath.Ext(filePath))
 			contentType := "image/jpeg"
-			switch ext {
-			case ".png":
-				contentType = "image/png"
-			case ".gif":
-				contentType = "image/gif"
-			case ".webp":
-				contentType = "image/webp"
-			case ".bmp":
-				contentType = "image/bmp"
+			if isVideo {
+				switch ext {
+				case ".mp4", ".m4v":
+					contentType = "video/mp4"
+				case ".webm":
+					contentType = "video/webm"
+				case ".mkv":
+					contentType = "video/x-matroska"
+				case ".avi":
+					contentType = "video/x-msvideo"
+				case ".mov":
+					contentType = "video/quicktime"
+				case ".wmv":
+					contentType = "video/x-ms-wmv"
+				case ".flv":
+					contentType = "video/x-flv"
+				}
+			} else {
+				switch ext {
+				case ".png":
+					contentType = "image/png"
+				case ".gif":
+					contentType = "image/gif"
+				case ".webp":
+					contentType = "image/webp"
+				case ".bmp":
+					contentType = "image/bmp"
+				}
 			}
 
 			w.Header().Set("Content-Type", contentType)
 			w.Header().Set("Cache-Control", "public, max-age=3600")
+			w.Header().Set("Accept-Ranges", "bytes")
 			io.Copy(w, file)
 			return
 		}

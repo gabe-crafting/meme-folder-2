@@ -27,9 +27,12 @@ function App() {
     const [allTags, setAllTags] = useState<Record<string, string[]>>({});
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
     const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
+    const [showOnlyUntagged, setShowOnlyUntagged] = useState(false);
 
     const folders = items.filter((item) => item.type === 'folder');
     const allImages = items.filter((item) => item.type === 'image');
+    const allVideos = items.filter((item) => item.type === 'video');
+    const allMedia = [...allImages, ...allVideos];
 
     // Load all tags when folder changes or when tags are updated
     useEffect(() => {
@@ -61,18 +64,29 @@ function App() {
         return Array.from(tagSet).sort();
     }, [allTags]);
 
-    // Filter images based on selected tags
-    const filteredImages = React.useMemo(() => {
-        if (selectedTags.size === 0) {
-            return allImages;
+    // Filter media based on selected tags and untagged filter
+    const filteredMedia = React.useMemo(() => {
+        let filtered = allMedia;
+
+        // Filter by untagged if enabled
+        if (showOnlyUntagged) {
+            filtered = filtered.filter(media => {
+                const mediaTags = allTags[media.name] || [];
+                return mediaTags.length === 0;
+            });
         }
 
-        return allImages.filter(image => {
-            const imageTags = allTags[image.name] || [];
-            // Image must have ALL selected tags
-            return Array.from(selectedTags).every(tag => imageTags.includes(tag));
-        });
-    }, [allImages, allTags, selectedTags]);
+        // Filter by selected tags
+        if (selectedTags.size > 0) {
+            filtered = filtered.filter(media => {
+                const mediaTags = allTags[media.name] || [];
+                // Media must have ALL selected tags
+                return Array.from(selectedTags).every(tag => mediaTags.includes(tag));
+            });
+        }
+
+        return filtered;
+    }, [allMedia, allTags, selectedTags, showOnlyUntagged]);
 
     const toggleTag = (tag: string) => {
         const newSelectedTags = new Set(selectedTags);
@@ -84,27 +98,28 @@ function App() {
         setSelectedTags(newSelectedTags);
     };
 
-    // If an image is selected, show the image viewer
+    // If a media item is selected, show the viewer
     if (selectedImage) {
-        const currentImageIndex = filteredImages.findIndex(img => img.name === selectedImage.name);
-        const imagePath = `${folderPath}\\${selectedImage.name}`;
+        const currentMediaIndex = filteredMedia.findIndex(item => item.name === selectedImage.name);
+        const mediaPath = `${folderPath}\\${selectedImage.name}`;
 
         return (
             <ImageViewer
-                imagePath={imagePath}
+                imagePath={mediaPath}
                 imageName={selectedImage.name}
                 folderPath={folderPath}
+                mediaType={selectedImage.type}
                 onClose={() => setSelectedImage(null)}
-                onNext={currentImageIndex < filteredImages.length - 1 
-                    ? () => setSelectedImage(filteredImages[currentImageIndex + 1])
+                onNext={currentMediaIndex < filteredMedia.length - 1 
+                    ? () => setSelectedImage(filteredMedia[currentMediaIndex + 1])
                     : undefined
                 }
-                onPrevious={currentImageIndex > 0
-                    ? () => setSelectedImage(filteredImages[currentImageIndex - 1])
+                onPrevious={currentMediaIndex > 0
+                    ? () => setSelectedImage(filteredMedia[currentMediaIndex - 1])
                     : undefined
                 }
-                hasNext={currentImageIndex < filteredImages.length - 1}
-                hasPrevious={currentImageIndex > 0}
+                hasNext={currentMediaIndex < filteredMedia.length - 1}
+                hasPrevious={currentMediaIndex > 0}
                 onTagsChanged={handleTagsChanged}
             />
         );
@@ -112,7 +127,7 @@ function App() {
 
     return (
         <SidebarProvider>
-            <div className="min-h-screen flex bg-background text-foreground">
+            <div className="min-h-screen w-full flex bg-background text-foreground">
                 {/* Sidebar */}
                 <Sidebar
                     favorites={favorites}
@@ -125,7 +140,7 @@ function App() {
                 />
 
                 {/* Main content area */}
-                <SidebarInset className="flex-1 flex flex-col min-h-0">
+                <SidebarInset className="flex-1 w-full flex flex-col min-h-0">
                     {/* Top bar / title */}
                     <header className="px-4 py-2 border-b border-border bg-card flex items-center gap-3">
                         <SidebarTrigger />
@@ -173,15 +188,18 @@ function App() {
                         />
                         <div className="border-t border-border" />
                         <FileList
-                            title="Images"
-                            items={filteredImages}
+                            title="Media"
+                            items={filteredMedia}
                             loading={loading}
                             error={null}
                             folderPath={folderPath}
                             uniqueTags={uniqueTags}
                             selectedTags={selectedTags}
                             onToggleTag={toggleTag}
-                            totalItemCount={allImages.length}
+                            totalItemCount={allMedia.length}
+                            allTags={allTags}
+                            showOnlyUntagged={showOnlyUntagged}
+                            onToggleUntagged={setShowOnlyUntagged}
                             onToggleFavorite={() => {
                                 if (isFavorite(folderPath)) {
                                     void removeFavorite(folderPath);

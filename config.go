@@ -13,9 +13,22 @@ type Favorite struct {
 	AddedAt string `json:"addedAt"`
 }
 
+// Settings represents application settings
+type Settings struct {
+	VideoMemoryLimitMB int `json:"videoMemoryLimitMB"` // Max MB per video (default 10, max 50)
+	ImageMemoryLimitMB int `json:"imageMemoryLimitMB"` // Max MB per image (default 20, max 100)
+}
+
 // Config represents the application configuration
 type Config struct {
 	Favorites []Favorite `json:"favorites"`
+	Settings  Settings   `json:"settings"`
+}
+
+// Default settings
+var defaultSettings = Settings{
+	VideoMemoryLimitMB: 10,
+	ImageMemoryLimitMB: 20,
 }
 
 const configFileName = "meme-folder-config.json"
@@ -44,9 +57,12 @@ func loadConfig() (*Config, error) {
 		return nil, err
 	}
 
-	// If config doesn't exist, return empty config
+	// If config doesn't exist, return default config
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return &Config{Favorites: []Favorite{}}, nil
+		return &Config{
+			Favorites: []Favorite{},
+			Settings:  defaultSettings,
+		}, nil
 	}
 
 	data, err := os.ReadFile(configPath)
@@ -62,6 +78,22 @@ func loadConfig() (*Config, error) {
 	// Ensure favorites is initialized
 	if config.Favorites == nil {
 		config.Favorites = []Favorite{}
+	}
+
+	// Apply default settings if not set or invalid
+	if config.Settings.VideoMemoryLimitMB == 0 {
+		config.Settings.VideoMemoryLimitMB = defaultSettings.VideoMemoryLimitMB
+	}
+	if config.Settings.ImageMemoryLimitMB == 0 {
+		config.Settings.ImageMemoryLimitMB = defaultSettings.ImageMemoryLimitMB
+	}
+
+	// Enforce max limits
+	if config.Settings.VideoMemoryLimitMB > 50 {
+		config.Settings.VideoMemoryLimitMB = 50
+	}
+	if config.Settings.ImageMemoryLimitMB > 100 {
+		config.Settings.ImageMemoryLimitMB = 100
 	}
 
 	return &config, nil
@@ -150,3 +182,38 @@ func (a *App) IsFavorite(path string) (bool, error) {
 	return false, nil
 }
 
+// GetSettings returns the current settings
+func (a *App) GetSettings() (Settings, error) {
+	config, err := loadConfig()
+	if err != nil {
+		return defaultSettings, err
+	}
+	return config.Settings, nil
+}
+
+// UpdateSettings updates the application settings
+func (a *App) UpdateSettings(videoLimitMB, imageLimitMB int) error {
+	// Enforce limits
+	if videoLimitMB < 1 {
+		videoLimitMB = 1
+	}
+	if videoLimitMB > 50 {
+		videoLimitMB = 50
+	}
+	if imageLimitMB < 1 {
+		imageLimitMB = 1
+	}
+	if imageLimitMB > 100 {
+		imageLimitMB = 100
+	}
+
+	config, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	config.Settings.VideoMemoryLimitMB = videoLimitMB
+	config.Settings.ImageMemoryLimitMB = imageLimitMB
+
+	return saveConfig(config)
+}

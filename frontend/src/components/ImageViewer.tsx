@@ -9,6 +9,7 @@ type Props = {
   imagePath: string;
   imageName: string;
   folderPath: string;
+  mediaType: string; // "image" or "video"
   onClose: () => void;
   onNext?: () => void;
   onPrevious?: () => void;
@@ -21,6 +22,7 @@ export function ImageViewer({
   imagePath,
   imageName,
   folderPath,
+  mediaType,
   onClose,
   onNext,
   onPrevious,
@@ -28,7 +30,8 @@ export function ImageViewer({
   hasPrevious,
   onTagsChanged,
 }: Props) {
-  const imageUrl = `/wails-image/${encodeURIComponent(imagePath.replace(/\\/g, '/'))}`;
+  const mediaUrl = `/wails-image/${encodeURIComponent(imagePath.replace(/\\/g, '/'))}`;
+  const isVideo = mediaType === 'video';
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [isLoadingTags, setIsLoadingTags] = useState(true);
@@ -218,13 +221,26 @@ export function ImageViewer({
         </div>
       </div>
 
-      {/* Image container */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={imageName}
-          className="w-full h-full object-contain"
-        />
+      {/* Media container */}
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
+        {isVideo ? (
+          <video
+            src={mediaUrl}
+            controls
+            autoPlay
+            loop
+            className="w-full h-full"
+            style={{ objectFit: 'contain' }}
+          >
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <img
+            src={mediaUrl}
+            alt={imageName}
+            className="w-full h-full object-contain"
+          />
+        )}
 
         {/* Navigation buttons */}
         {hasPrevious && onPrevious && (

@@ -14,6 +14,8 @@ export function GetImageBase64(arg1:string):Promise<string>;
 
 export function GetImageTags(arg1:string,arg2:string):Promise<Array<string>>;
 
+export function GetSettings():Promise<main.Settings>;
+
 export function Greet(arg1:string):Promise<string>;
 
 export function IsFavorite(arg1:string):Promise<boolean>;
@@ -27,3 +29,5 @@ export function RemoveFavorite(arg1:string):Promise<void>;
 export function RemoveImageTag(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SetImageTags(arg1:string,arg2:string,arg3:Array<string>):Promise<void>;
+
+export function UpdateSettings(arg1:number,arg2:number):Promise<void>;

@@ -26,6 +26,10 @@ export function GetImageTags(arg1, arg2) {
   return window['go']['main']['App']['GetImageTags'](arg1, arg2);
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
@@ -52,4 +56,8 @@ export function RemoveImageTag(arg1, arg2, arg3) {
 
 export function SetImageTags(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetImageTags'](arg1, arg2, arg3);
+}
+
+export function UpdateSettings(arg1, arg2) {
+  return window['go']['main']['App']['UpdateSettings'](arg1, arg2);
 }
