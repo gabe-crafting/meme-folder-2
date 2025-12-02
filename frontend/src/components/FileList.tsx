@@ -1,6 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import type { FileEntry } from '../hooks/useFolderBrowser';
 import { ImagePreview } from './ImagePreview';
+import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 type Props = {
   title: string;
@@ -9,6 +16,14 @@ type Props = {
   error: string | null;
   onItemClick: (entry: FileEntry) => void;
   folderPath?: string;
+  // Tag filtering props (optional, only for Images section)
+  uniqueTags?: string[];
+  selectedTags?: Set<string>;
+  onToggleTag?: (tag: string) => void;
+  totalItemCount?: number;
+  // Collapsible props
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 };
 
 export function FileList({
@@ -18,6 +33,12 @@ export function FileList({
   error,
   onItemClick,
   folderPath,
+  uniqueTags,
+  selectedTags,
+  onToggleTag,
+  totalItemCount,
+  collapsible = false,
+  defaultCollapsed = false,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
@@ -71,11 +92,118 @@ export function FileList({
     }
   };
 
+  // If collapsible, wrap in Accordion
+  if (collapsible) {
+    return (
+      <Accordion type="single" collapsible defaultValue={defaultCollapsed ? undefined : "item-1"} className="bg-card/30">
+        <AccordionItem value="item-1" className="border-b border-border">
+          <AccordionTrigger className="px-4 py-2 hover:no-underline bg-card/80">
+            <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-0">
+            <div
+              className="overflow-auto outline-none bg-background max-h-[300px]"
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+            >
+              {error && (
+                <div className="mb-2 text-xs text-destructive px-4 py-2">
+                  {error}
+                </div>
+              )}
+              {items.length === 0 && !loading && !error && (
+                <div className="px-4 py-8 text-xs text-muted-foreground text-center">
+                  (Empty)
+                </div>
+              )}
+              {/* Flex layout similar to Windows 10 File Explorer medium icons */}
+              <div className="p-1">
+                <div className="flex flex-wrap gap-1 justify-start">
+                  {items.map((item, index) => {
+                    const isSelected = index === selectedIndex;
+                    const isImage = item.type === 'image';
+                    const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
+
+                    return (
+                      <div
+                        key={item.name}
+                        ref={isSelected ? selectedItemRef : null}
+                        className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
+                          isSelected
+                            ? 'bg-primary/90 text-primary-foreground shadow-md'
+                            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                        onClick={() => {
+                          setSelectedIndex(index);
+                          onItemClick(item);
+                        }}
+                      >
+                        {/* Icon / Image preview */}
+                        <div
+                          className={`flex items-center justify-center mb-0.5 shrink-0 ${
+                            isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
+                          }`}
+                        >
+                          {isImage && imagePath ? (
+                            <ImagePreview
+                              imagePath={imagePath}
+                              imageName={item.name}
+                              className="w-full h-full rounded-sm border border-border"
+                            />
+                          ) : (
+                            <span className="text-2xl leading-none">
+                              {item.type === 'folder' ? '📁' : '🖼️'}
+                            </span>
+                          )}
+                        </div>
+                        {/* Name */}
+                        <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
+                          {item.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    );
+  }
+
+  // Non-collapsible version (for Images section)
   return (
     <section className="flex-1 flex flex-col min-h-0 bg-card/30">
       {/* Header bar */}
-      <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b border-border bg-card/80">
-        {title}
+      <div className="px-4 py-2 border-b border-border bg-card/80">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          {selectedTags && selectedTags.size > 0 && totalItemCount && (
+            <span className="text-xs text-muted-foreground">
+              ({items.length} of {totalItemCount})
+            </span>
+          )}
+        </div>
+        
+        {/* Tag filter (only shown if tags are provided) */}
+        {uniqueTags && uniqueTags.length > 0 && onToggleTag && selectedTags && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {uniqueTags.map((tag) => {
+              const isSelected = selectedTags.has(tag);
+              return (
+                <Badge
+                  key={tag}
+                  variant={isSelected ? "default" : "outline"}
+                  className="cursor-pointer transition-all text-xs"
+                  onClick={() => onToggleTag(tag)}
+                >
+                  {tag}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
       </div>
       {/* Scrollable grid area */}
       <div

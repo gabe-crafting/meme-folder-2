@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFolderBrowser } from './hooks/useFolderBrowser';
 import { PathBar } from './components/PathBar';
 import { FileList } from './components/FileList';
+import { ImageViewer } from './components/ImageViewer';
+import type { FileEntry } from './hooks/useFolderBrowser';
+import { GetAllTags } from '../wailsjs/go/main/App';
 
 function App() {
     const {
@@ -16,8 +19,92 @@ function App() {
         getParentPath,
     } = useFolderBrowser('C:\\Users\\gabe\\Desktop');
 
+    const [selectedImage, setSelectedImage] = useState<FileEntry | null>(null);
+    const [allTags, setAllTags] = useState<Record<string, string[]>>({});
+    const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+    const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
+
     const folders = items.filter((item) => item.type === 'folder');
-    const images = items.filter((item) => item.type === 'image');
+    const allImages = items.filter((item) => item.type === 'image');
+
+    // Load all tags when folder changes or when tags are updated
+    useEffect(() => {
+        const loadAllTags = async () => {
+            try {
+                const tags = await GetAllTags(folderPath);
+                setAllTags(tags);
+            } catch (err) {
+                console.error('Failed to load tags:', err);
+                setAllTags({});
+            }
+        };
+
+        void loadAllTags();
+        setSelectedTags(new Set()); // Clear selected tags when folder changes
+    }, [folderPath, items, tagsRefreshKey]); // Reload when items change or refresh triggered
+
+    const handleTagsChanged = () => {
+        // Trigger a refresh of all tags
+        setTagsRefreshKey(prev => prev + 1);
+    };
+
+    // Get unique tags from all images
+    const uniqueTags = React.useMemo(() => {
+        const tagSet = new Set<string>();
+        Object.values(allTags).forEach(imageTags => {
+            imageTags.forEach(tag => tagSet.add(tag));
+        });
+        return Array.from(tagSet).sort();
+    }, [allTags]);
+
+    // Filter images based on selected tags
+    const filteredImages = React.useMemo(() => {
+        if (selectedTags.size === 0) {
+            return allImages;
+        }
+
+        return allImages.filter(image => {
+            const imageTags = allTags[image.name] || [];
+            // Image must have ALL selected tags
+            return Array.from(selectedTags).every(tag => imageTags.includes(tag));
+        });
+    }, [allImages, allTags, selectedTags]);
+
+    const toggleTag = (tag: string) => {
+        const newSelectedTags = new Set(selectedTags);
+        if (newSelectedTags.has(tag)) {
+            newSelectedTags.delete(tag);
+        } else {
+            newSelectedTags.add(tag);
+        }
+        setSelectedTags(newSelectedTags);
+    };
+
+    // If an image is selected, show the image viewer
+    if (selectedImage) {
+        const currentImageIndex = filteredImages.findIndex(img => img.name === selectedImage.name);
+        const imagePath = `${folderPath}\\${selectedImage.name}`;
+
+        return (
+            <ImageViewer
+                imagePath={imagePath}
+                imageName={selectedImage.name}
+                folderPath={folderPath}
+                onClose={() => setSelectedImage(null)}
+                onNext={currentImageIndex < filteredImages.length - 1 
+                    ? () => setSelectedImage(filteredImages[currentImageIndex + 1])
+                    : undefined
+                }
+                onPrevious={currentImageIndex > 0
+                    ? () => setSelectedImage(filteredImages[currentImageIndex - 1])
+                    : undefined
+                }
+                hasNext={currentImageIndex < filteredImages.length - 1}
+                hasPrevious={currentImageIndex > 0}
+                onTagsChanged={handleTagsChanged}
+            />
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -52,6 +139,8 @@ function App() {
                     ]}
                     loading={loading}
                     error={error}
+                    collapsible={true}
+                    defaultCollapsed={false}
                     onItemClick={(entry) => {
                         if (entry.name === '..') {
                             void openParent();
@@ -63,12 +152,16 @@ function App() {
                 <div className="border-t border-border" />
                 <FileList
                     title="Images"
-                    items={images}
+                    items={filteredImages}
                     loading={loading}
                     error={null}
                     folderPath={folderPath}
-                    onItemClick={() => {
-                        // no-op for now; navigation only for folders
+                    uniqueTags={uniqueTags}
+                    selectedTags={selectedTags}
+                    onToggleTag={toggleTag}
+                    totalItemCount={allImages.length}
+                    onItemClick={(entry) => {
+                        setSelectedImage(entry);
                     }}
                 />
             </div>
