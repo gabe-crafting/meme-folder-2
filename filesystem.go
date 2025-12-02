@@ -59,7 +59,7 @@ func (a *App) ListDir(path string) ([]FileEntry, error) {
 
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
 		switch ext {
-		case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp":
+		case ".png", ".jpg", ".jpeg", ".jfif", ".gif", ".webp", ".bmp":
 			// Skip images that exceed the limit
 			if info.Size() > imageLimitBytes {
 				continue

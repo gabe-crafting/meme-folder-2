@@ -19,7 +19,7 @@ func (a *App) GetImageBase64(fullPath string) (string, error) {
 	ext := strings.ToLower(filepath.Ext(fullPath))
 	mimeType := "image/png" // default
 	switch ext {
-	case ".jpg", ".jpeg":
+	case ".jpg", ".jpeg", ".jfif":
 		mimeType = "image/jpeg"
 	case ".gif":
 		mimeType = "image/gif"

@@ -85,7 +85,7 @@ func serveImageMiddleware(next http.Handler) http.Handler {
 					http.Error(w, "Video file too large", http.StatusRequestEntityTooLarge)
 					return
 				}
-			case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp":
+			case ".png", ".jpg", ".jpeg", ".jfif", ".gif", ".webp", ".bmp":
 				if fileSizeMB > float64(settings.ImageMemoryLimitMB) {
 					http.Error(w, "Image file too large", http.StatusRequestEntityTooLarge)
 					return
@@ -129,6 +129,8 @@ func serveImageMiddleware(next http.Handler) http.Handler {
 					contentType = "image/webp"
 				case ".bmp":
 					contentType = "image/bmp"
+				case ".jfif":
+					contentType = "image/jpeg"
 				}
 			}
 
