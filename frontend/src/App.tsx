@@ -182,6 +182,14 @@ function App() {
                             selectedTags={selectedTags}
                             onToggleTag={toggleTag}
                             totalItemCount={allImages.length}
+                            onToggleFavorite={() => {
+                                if (isFavorite(folderPath)) {
+                                    void removeFavorite(folderPath);
+                                } else {
+                                    void addFavorite(folderPath);
+                                }
+                            }}
+                            isCurrentFolderFavorite={isFavorite(folderPath)}
                             onItemClick={(entry) => {
                                 setSelectedImage(entry);
                             }}

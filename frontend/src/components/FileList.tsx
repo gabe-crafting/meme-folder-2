@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import type { FileEntry } from '../hooks/useFolderBrowser';
 import { ImagePreview } from './ImagePreview';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Accordion,
   AccordionContent,
@@ -36,6 +37,9 @@ type Props = {
   // Favorites props (optional, only for Folders section)
   onAddFavorite?: (path: string) => void;
   isFavorite?: (path: string) => boolean;
+  // Current folder favorite toggle (for Images section)
+  onToggleFavorite?: () => void;
+  isCurrentFolderFavorite?: boolean;
 };
 
 export function FileList({
@@ -53,6 +57,8 @@ export function FileList({
   defaultCollapsed = false,
   onAddFavorite,
   isFavorite,
+  onToggleFavorite,
+  isCurrentFolderFavorite,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
@@ -279,7 +285,20 @@ export function FileList({
       {/* Header bar */}
       <div className="px-4 py-2 border-b border-border bg-card/80">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          <div className="flex items-center gap-2">
+            {onToggleFavorite && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 p-0"
+                onClick={onToggleFavorite}
+                title={isCurrentFolderFavorite ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Star className={`h-4 w-4 ${isCurrentFolderFavorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+              </Button>
+            )}
+            <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          </div>
           {selectedTags && selectedTags.size > 0 && totalItemCount && (
             <span className="text-xs text-muted-foreground">
               ({items.length} of {totalItemCount})
