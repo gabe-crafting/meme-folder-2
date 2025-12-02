@@ -15,7 +15,7 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Copy, Trash2, Tag, FolderOpen, ExternalLink } from 'lucide-react';
+import { Copy, Trash2, Tag, FolderOpen, ExternalLink, Star } from 'lucide-react';
 import { OpenInExplorer } from '../../wailsjs/go/main/App';
 
 type Props = {
@@ -33,6 +33,9 @@ type Props = {
   // Collapsible props
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  // Favorites props (optional, only for Folders section)
+  onAddFavorite?: (path: string) => void;
+  isFavorite?: (path: string) => boolean;
 };
 
 export function FileList({
@@ -48,6 +51,8 @@ export function FileList({
   totalItemCount,
   collapsible = false,
   defaultCollapsed = false,
+  onAddFavorite,
+  isFavorite,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
@@ -178,6 +183,23 @@ export function FileList({
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Open Folder
               </ContextMenuItem>
+              {onAddFavorite && folderPath && (
+                <>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem 
+                    onClick={() => {
+                      const fullPath = `${folderPath}\\${item.name}`;
+                      onAddFavorite(fullPath);
+                    }}
+                    disabled={isFavorite && folderPath ? isFavorite(`${folderPath}\\${item.name}`) : false}
+                  >
+                    <Star className="mr-2 h-4 w-4" />
+                    {isFavorite && folderPath && isFavorite(`${folderPath}\\${item.name}`) 
+                      ? 'Already in Favorites' 
+                      : 'Add to Favorites'}
+                  </ContextMenuItem>
+                </>
+              )}
               <ContextMenuSeparator />
               <ContextMenuItem onClick={() => handleCopyName(item)}>
                 <Copy className="mr-2 h-4 w-4" />

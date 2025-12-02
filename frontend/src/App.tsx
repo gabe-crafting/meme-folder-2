@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useFolderBrowser } from './hooks/useFolderBrowser';
+import { useFavorites } from './hooks/useFavorites';
 import { PathBar } from './components/PathBar';
 import { FileList } from './components/FileList';
 import { ImageViewer } from './components/ImageViewer';
+import { Sidebar } from './components/Sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import type { FileEntry } from './hooks/useFolderBrowser';
 import { GetAllTags } from '../wailsjs/go/main/App';
 
@@ -19,6 +22,7 @@ function App() {
         getParentPath,
     } = useFolderBrowser('C:\\Users\\gabe\\Desktop');
 
+    const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
     const [selectedImage, setSelectedImage] = useState<FileEntry | null>(null);
     const [allTags, setAllTags] = useState<Record<string, string[]>>({});
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -107,25 +111,40 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-background text-foreground">
-            {/* Top bar / title */}
-            <header className="px-4 py-2 border-b border-border bg-card">
-                <h1 className="text-sm font-semibold">meme-folder-</h1>
-            </header>
+        <SidebarProvider>
+            <div className="min-h-screen flex bg-background text-foreground">
+                {/* Sidebar */}
+                <Sidebar
+                    favorites={favorites}
+                    onNavigate={(path) => {
+                        setFolderPath(path);
+                        void readFolder(path);
+                    }}
+                    onRemove={removeFavorite}
+                    currentPath={folderPath}
+                />
 
-            {/* Path bar */}
-            <PathBar
-                folderPath={folderPath}
-                setFolderPath={setFolderPath}
-                loading={loading}
-                onOpen={() => { void readFolder(); }}
-                onBack={() => { void openParent(); }}
-                canGoBack={getParentPath(folderPath) !== folderPath}
-            />
+                {/* Main content area */}
+                <SidebarInset className="flex-1 flex flex-col min-h-0">
+                    {/* Top bar / title */}
+                    <header className="px-4 py-2 border-b border-border bg-card flex items-center gap-3">
+                        <SidebarTrigger />
+                        <h1 className="text-sm font-semibold">meme-folder-</h1>
+                    </header>
 
-            {/* File lists: folders above, images below */}
-            <div className="flex-1 flex flex-col min-h-0">
-                <FileList
+                    {/* Path bar */}
+                    <PathBar
+                        folderPath={folderPath}
+                        setFolderPath={setFolderPath}
+                        loading={loading}
+                        onOpen={() => { void readFolder(); }}
+                        onBack={() => { void openParent(); }}
+                        canGoBack={getParentPath(folderPath) !== folderPath}
+                    />
+
+                    {/* File lists: folders above, images below */}
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <FileList
                     title="Folders"
                     items={[
                         // Synthetic parent entry for "cd .."
@@ -141,6 +160,9 @@ function App() {
                     error={error}
                     collapsible={true}
                     defaultCollapsed={false}
+                    folderPath={folderPath}
+                    onAddFavorite={addFavorite}
+                    isFavorite={isFavorite}
                     onItemClick={(entry) => {
                         if (entry.name === '..') {
                             void openParent();
@@ -148,24 +170,26 @@ function App() {
                             void enterFolder(entry);
                         }
                     }}
-                />
-                <div className="border-t border-border" />
-                <FileList
-                    title="Images"
-                    items={filteredImages}
-                    loading={loading}
-                    error={null}
-                    folderPath={folderPath}
-                    uniqueTags={uniqueTags}
-                    selectedTags={selectedTags}
-                    onToggleTag={toggleTag}
-                    totalItemCount={allImages.length}
-                    onItemClick={(entry) => {
-                        setSelectedImage(entry);
-                    }}
-                />
+                        />
+                        <div className="border-t border-border" />
+                        <FileList
+                            title="Images"
+                            items={filteredImages}
+                            loading={loading}
+                            error={null}
+                            folderPath={folderPath}
+                            uniqueTags={uniqueTags}
+                            selectedTags={selectedTags}
+                            onToggleTag={toggleTag}
+                            totalItemCount={allImages.length}
+                            onItemClick={(entry) => {
+                                setSelectedImage(entry);
+                            }}
+                        />
+                    </div>
+                </SidebarInset>
             </div>
-        </div>
+        </SidebarProvider>
     );
 }
 

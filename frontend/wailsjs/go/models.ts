@@ -1,5 +1,21 @@
 export namespace main {
 	
+	export class Favorite {
+	    path: string;
+	    name: string;
+	    addedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Favorite(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	        this.addedAt = source["addedAt"];
+	    }
+	}
 	export class FileEntry {
 	    name: string;
 	    type: string;
