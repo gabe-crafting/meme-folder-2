@@ -195,6 +195,10 @@ export function ImageViewer({
               <div className="flex flex-wrap gap-1.5">
                 {allFolderTags
                   .filter(tag => !tags.includes(tag)) // Only show tags not already on image
+                  .filter(tag => 
+                    newTag === '' || 
+                    tag.toLowerCase().includes(newTag.toLowerCase())
+                  ) // Filter by input text
                   .map((tag) => (
                     <Badge
                       key={tag}
@@ -204,6 +208,7 @@ export function ImageViewer({
                         try {
                           await AddImageTag(folderPath, imageName, tag);
                           setTags([...tags, tag]);
+                          setNewTag(''); // Clear input after adding
                           onTagsChanged?.();
                         } catch (err) {
                           console.error('Failed to add tag:', err);

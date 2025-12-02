@@ -73,6 +73,7 @@ export function FileList({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [showTags, setShowTags] = useState(true);
 
   // Reset selection when items change
   useEffect(() => {
@@ -320,10 +321,27 @@ export function FileList({
           </div>
           
           <div className="flex items-center gap-2">
-            {selectedTags && selectedTags.size > 0 && totalItemCount && (
-              <span className="text-xs text-muted-foreground">
-                ({items.length} of {totalItemCount})
-              </span>
+            {/* Tag search input */}
+            {uniqueTags && uniqueTags.length > 0 && showTags && (
+              <Input
+                type="text"
+                placeholder="Search tags..."
+                value={tagSearchQuery}
+                onChange={(e) => setTagSearchQuery(e.target.value)}
+                className="h-7 w-32 text-xs"
+              />
+            )}
+            
+            {/* Hide tags switch */}
+            {uniqueTags && uniqueTags.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showTags}
+                  onCheckedChange={setShowTags}
+                  className="scale-75"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Show tags</span>
+              </div>
             )}
             
             {/* Untagged filter switch */}
@@ -338,21 +356,16 @@ export function FileList({
               </div>
             )}
             
-            {/* Tag search input */}
-            {uniqueTags && uniqueTags.length > 0 && (
-              <Input
-                type="text"
-                placeholder="Search tags..."
-                value={tagSearchQuery}
-                onChange={(e) => setTagSearchQuery(e.target.value)}
-                className="h-7 w-32 text-xs"
-              />
+            {selectedTags && selectedTags.size > 0 && totalItemCount && (
+              <span className="text-xs text-muted-foreground">
+                ({items.length} of {totalItemCount})
+              </span>
             )}
           </div>
         </div>
         
-        {/* Tag filter (only shown if tags are provided) */}
-        {uniqueTags && uniqueTags.length > 0 && onToggleTag && selectedTags && (
+        {/* Tag filter (only shown if tags are provided and showTags is true) */}
+        {showTags && uniqueTags && uniqueTags.length > 0 && onToggleTag && selectedTags && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {uniqueTags
               .filter(tag => 

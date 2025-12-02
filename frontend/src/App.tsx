@@ -68,15 +68,16 @@ function App() {
     const filteredMedia = React.useMemo(() => {
         let filtered = allMedia;
 
-        // Filter by untagged if enabled
+        // Filter by untagged if enabled (ignores tag filters)
         if (showOnlyUntagged) {
             filtered = filtered.filter(media => {
                 const mediaTags = allTags[media.name] || [];
                 return mediaTags.length === 0;
             });
+            return filtered; // Return early, ignore tag filters
         }
 
-        // Filter by selected tags
+        // Filter by selected tags (only if not showing untagged)
         if (selectedTags.size > 0) {
             filtered = filtered.filter(media => {
                 const mediaTags = allTags[media.name] || [];
