@@ -19,16 +19,35 @@ type Settings struct {
 	ImageMemoryLimitMB int `json:"imageMemoryLimitMB"` // Max MB per image (default 20, max 100)
 }
 
+// UIState represents the UI state to persist
+type UIState struct {
+	LastPath         string `json:"lastPath"`         // Last opened folder path
+	FoldersCollapsed bool   `json:"foldersCollapsed"` // Folders accordion state
+	ShowTags         bool   `json:"showTags"`         // Show tags switch state
+	ShowOnlyUntagged bool   `json:"showOnlyUntagged"` // Untagged only switch state
+	SidebarOpen      bool   `json:"sidebarOpen"`      // Sidebar collapsed state
+}
+
 // Config represents the application configuration
 type Config struct {
 	Favorites []Favorite `json:"favorites"`
 	Settings  Settings   `json:"settings"`
+	UIState   UIState    `json:"uiState"`
 }
 
 // Default settings
 var defaultSettings = Settings{
 	VideoMemoryLimitMB: 10,
 	ImageMemoryLimitMB: 20,
+}
+
+// Default UI state
+var defaultUIState = UIState{
+	LastPath:         "",
+	FoldersCollapsed: false,
+	ShowTags:         true,
+	ShowOnlyUntagged: false,
+	SidebarOpen:      true,
 }
 
 const configFileName = "meme-folder-config.json"
@@ -62,6 +81,7 @@ func loadConfig() (*Config, error) {
 		return &Config{
 			Favorites: []Favorite{},
 			Settings:  defaultSettings,
+			UIState:   defaultUIState,
 		}, nil
 	}
 
@@ -94,6 +114,12 @@ func loadConfig() (*Config, error) {
 	}
 	if config.Settings.ImageMemoryLimitMB > 100 {
 		config.Settings.ImageMemoryLimitMB = 100
+	}
+
+	// Apply default UI state if empty
+	if config.UIState.LastPath == "" && !config.UIState.ShowTags {
+		// Looks like UI state wasn't saved, use defaults
+		config.UIState = defaultUIState
 	}
 
 	return &config, nil
@@ -214,6 +240,33 @@ func (a *App) UpdateSettings(videoLimitMB, imageLimitMB int) error {
 
 	config.Settings.VideoMemoryLimitMB = videoLimitMB
 	config.Settings.ImageMemoryLimitMB = imageLimitMB
+
+	return saveConfig(config)
+}
+
+// GetUIState returns the current UI state
+func (a *App) GetUIState() (UIState, error) {
+	config, err := loadConfig()
+	if err != nil {
+		return defaultUIState, err
+	}
+	return config.UIState, nil
+}
+
+// SaveUIState saves the UI state
+func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyUntagged, sidebarOpen bool) error {
+	config, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	config.UIState = UIState{
+		LastPath:         lastPath,
+		FoldersCollapsed: foldersCollapsed,
+		ShowTags:         showTags,
+		ShowOnlyUntagged: showOnlyUntagged,
+		SidebarOpen:      sidebarOpen,
+	}
 
 	return saveConfig(config)
 }

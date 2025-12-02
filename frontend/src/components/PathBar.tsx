@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, FolderOpen } from 'lucide-react';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 type Props = {
   folderPath: string;
@@ -22,6 +23,7 @@ export function PathBar({
 }: Props) {
   return (
     <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+      <SidebarTrigger className="shrink-0" />
       <Button
         type="button"
         onClick={onBack}

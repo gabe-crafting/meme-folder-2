@@ -10,11 +10,15 @@ export function GetAllTags(arg1:string):Promise<Record<string, Array<string>>>;
 
 export function GetFavorites():Promise<Array<main.Favorite>>;
 
+export function GetHomeDirectory():Promise<string>;
+
 export function GetImageBase64(arg1:string):Promise<string>;
 
 export function GetImageTags(arg1:string,arg2:string):Promise<Array<string>>;
 
 export function GetSettings():Promise<main.Settings>;
+
+export function GetUIState():Promise<main.UIState>;
 
 export function Greet(arg1:string):Promise<string>;
 
@@ -27,6 +31,8 @@ export function OpenInExplorer(arg1:string):Promise<void>;
 export function RemoveFavorite(arg1:string):Promise<void>;
 
 export function RemoveImageTag(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function SaveUIState(arg1:string,arg2:boolean,arg3:boolean,arg4:boolean,arg5:boolean):Promise<void>;
 
 export function SetImageTags(arg1:string,arg2:string,arg3:Array<string>):Promise<void>;
 

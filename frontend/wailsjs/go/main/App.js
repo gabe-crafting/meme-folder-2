@@ -18,6 +18,10 @@ export function GetFavorites() {
   return window['go']['main']['App']['GetFavorites']();
 }
 
+export function GetHomeDirectory() {
+  return window['go']['main']['App']['GetHomeDirectory']();
+}
+
 export function GetImageBase64(arg1) {
   return window['go']['main']['App']['GetImageBase64'](arg1);
 }
@@ -28,6 +32,10 @@ export function GetImageTags(arg1, arg2) {
 
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
+}
+
+export function GetUIState() {
+  return window['go']['main']['App']['GetUIState']();
 }
 
 export function Greet(arg1) {
@@ -52,6 +60,10 @@ export function RemoveFavorite(arg1) {
 
 export function RemoveImageTag(arg1, arg2, arg3) {
   return window['go']['main']['App']['RemoveImageTag'](arg1, arg2, arg3);
+}
+
+export function SaveUIState(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['SaveUIState'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function SetImageTags(arg1, arg2, arg3) {

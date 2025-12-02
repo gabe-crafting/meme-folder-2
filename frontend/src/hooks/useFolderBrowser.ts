@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ListDir } from "../../wailsjs/go/main/App";
+import { ListDir, GetHomeDirectory, GetUIState } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
 
 export type FileEntry = main.FileEntry;
 
-export function useFolderBrowser(initialPath: string) {
-  const [folderPath, setFolderPath] = useState(initialPath);
+export function useFolderBrowser(initialPath?: string) {
+  const [folderPath, setFolderPath] = useState(initialPath || '');
   const [items, setItems] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,34 @@ export function useFolderBrowser(initialPath: string) {
 
   // Load initial folder on mount
   useEffect(() => {
-    void readFolder(initialPath);
+    const initializeFolder = async () => {
+      let pathToLoad = initialPath;
+      
+      // If no initial path provided, try to get last path from UI state
+      if (!pathToLoad) {
+        try {
+          const uiState = await GetUIState();
+          pathToLoad = uiState.lastPath;
+        } catch (err) {
+          console.error('Failed to get UI state:', err);
+        }
+      }
+
+      // If still no path, get home directory
+      if (!pathToLoad) {
+        try {
+          pathToLoad = await GetHomeDirectory();
+        } catch (err) {
+          console.error('Failed to get home directory:', err);
+          pathToLoad = 'C:\\'; // Fallback to C:\ on Windows
+        }
+      }
+      
+      setFolderPath(pathToLoad);
+      await readFolder(pathToLoad);
+    };
+
+    void initializeFolder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

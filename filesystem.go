@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -87,4 +88,13 @@ func (a *App) ListDir(path string) ([]FileEntry, error) {
 	}
 
 	return result, nil
+}
+
+// GetHomeDirectory returns the user's home directory
+func (a *App) GetHomeDirectory() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return usr.HomeDir, nil
 }

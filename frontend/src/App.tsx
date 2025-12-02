@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFolderBrowser } from './hooks/useFolderBrowser';
 import { useFavorites } from './hooks/useFavorites';
+import { useUIState } from './hooks/useUIState';
 import { PathBar } from './components/PathBar';
 import { FileList } from './components/FileList';
 import { ImageViewer } from './components/ImageViewer';
@@ -20,14 +21,14 @@ function App() {
         openParent,
         enterFolder,
         getParentPath,
-    } = useFolderBrowser('C:\\Users\\gabe\\Desktop');
+    } = useFolderBrowser(); // No hardcoded path - will use home directory
 
     const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
+    const { uiState, saveUIState, isLoaded } = useUIState();
     const [selectedImage, setSelectedImage] = useState<FileEntry | null>(null);
     const [allTags, setAllTags] = useState<Record<string, string[]>>({});
     const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
     const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
-    const [showOnlyUntagged, setShowOnlyUntagged] = useState(false);
 
     const folders = items.filter((item) => item.type === 'folder');
     const allImages = items.filter((item) => item.type === 'image');
@@ -69,7 +70,7 @@ function App() {
         let filtered = allMedia;
 
         // Filter by untagged if enabled (ignores tag filters)
-        if (showOnlyUntagged) {
+        if (uiState.showOnlyUntagged) {
             filtered = filtered.filter(media => {
                 const mediaTags = allTags[media.name] || [];
                 return mediaTags.length === 0;
@@ -87,7 +88,7 @@ function App() {
         }
 
         return filtered;
-    }, [allMedia, allTags, selectedTags, showOnlyUntagged]);
+    }, [allMedia, allTags, selectedTags, uiState.showOnlyUntagged]);
 
     const toggleTag = (tag: string) => {
         const newSelectedTags = new Set(selectedTags);
@@ -98,6 +99,13 @@ function App() {
         }
         setSelectedTags(newSelectedTags);
     };
+
+    // Save last path when it changes
+    useEffect(() => {
+        if (isLoaded && folderPath) {
+            void saveUIState({ lastPath: folderPath });
+        }
+    }, [folderPath, isLoaded, saveUIState]);
 
     // If a media item is selected, show the viewer
     if (selectedImage) {
@@ -142,12 +150,6 @@ function App() {
 
                 {/* Main content area */}
                 <SidebarInset className="flex-1 w-full flex flex-col min-h-0">
-                    {/* Top bar / title */}
-                    <header className="px-4 py-2 border-b border-border bg-card flex items-center gap-3">
-                        <SidebarTrigger />
-                        <h1 className="text-sm font-semibold">meme-folder-</h1>
-                    </header>
-
                     {/* Path bar */}
                     <PathBar
                         folderPath={folderPath}
@@ -161,31 +163,34 @@ function App() {
                     {/* File lists: folders above, images below */}
                     <div className="flex-1 flex flex-col min-h-0">
                         <FileList
-                    title="Folders"
-                    items={[
-                        // Synthetic parent entry for "cd .."
-                        {
-                            name: '..',
-                            type: 'folder',
-                            size: 0,
-                            modified: '',
-                        },
-                        ...folders,
-                    ]}
-                    loading={loading}
-                    error={error}
-                    collapsible={true}
-                    defaultCollapsed={false}
-                    folderPath={folderPath}
-                    onAddFavorite={addFavorite}
-                    isFavorite={isFavorite}
-                    onItemClick={(entry) => {
-                        if (entry.name === '..') {
-                            void openParent();
-                        } else {
-                            void enterFolder(entry);
-                        }
-                    }}
+                            title="Folders"
+                            items={[
+                                // Synthetic parent entry for "cd .."
+                                {
+                                    name: '..',
+                                    type: 'folder',
+                                    size: 0,
+                                    modified: '',
+                                },
+                                ...folders,
+                            ]}
+                            loading={loading}
+                            error={error}
+                            collapsible={true}
+                            defaultCollapsed={isLoaded ? uiState.foldersCollapsed : false}
+                            onCollapsedChange={(collapsed) => {
+                                void saveUIState({ foldersCollapsed: collapsed });
+                            }}
+                            folderPath={folderPath}
+                            onAddFavorite={addFavorite}
+                            isFavorite={isFavorite}
+                            onItemClick={(entry) => {
+                                if (entry.name === '..') {
+                                    void openParent();
+                                } else {
+                                    void enterFolder(entry);
+                                }
+                            }}
                         />
                         <div className="border-t border-border" />
                         <FileList
@@ -199,8 +204,14 @@ function App() {
                             onToggleTag={toggleTag}
                             totalItemCount={allMedia.length}
                             allTags={allTags}
-                            showOnlyUntagged={showOnlyUntagged}
-                            onToggleUntagged={setShowOnlyUntagged}
+                            showOnlyUntagged={isLoaded ? uiState.showOnlyUntagged : false}
+                            onToggleUntagged={(value) => {
+                                void saveUIState({ showOnlyUntagged: value });
+                            }}
+                            showTags={isLoaded ? uiState.showTags : true}
+                            onShowTagsChange={(value) => {
+                                void saveUIState({ showTags: value });
+                            }}
                             onToggleFavorite={() => {
                                 if (isFavorite(folderPath)) {
                                     void removeFavorite(folderPath);

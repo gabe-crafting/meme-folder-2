@@ -38,6 +38,7 @@ type Props = {
   // Collapsible props
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   // Favorites props (optional, only for Folders section)
   onAddFavorite?: (path: string) => void;
   isFavorite?: (path: string) => boolean;
@@ -47,6 +48,9 @@ type Props = {
   // Untagged filter
   showOnlyUntagged?: boolean;
   onToggleUntagged?: (value: boolean) => void;
+  // Show tags
+  showTags?: boolean;
+  onShowTagsChange?: (value: boolean) => void;
 };
 
 export function FileList({
@@ -63,17 +67,19 @@ export function FileList({
   allTags,
   collapsible = false,
   defaultCollapsed = false,
+  onCollapsedChange,
   onAddFavorite,
   isFavorite,
   onToggleFavorite,
   isCurrentFolderFavorite,
   showOnlyUntagged,
   onToggleUntagged,
+  showTags = true,
+  onShowTagsChange,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const selectedItemRef = useRef<HTMLDivElement>(null);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
-  const [showTags, setShowTags] = useState(true);
 
   // Reset selection when items change
   useEffect(() => {
@@ -265,7 +271,17 @@ export function FileList({
   // If collapsible, wrap in Accordion
   if (collapsible) {
     return (
-      <Accordion type="single" collapsible defaultValue={defaultCollapsed ? undefined : "item-1"} className="bg-card/30">
+      <Accordion 
+        type="single" 
+        collapsible 
+        defaultValue={defaultCollapsed ? undefined : "item-1"} 
+        className="bg-card/30"
+        onValueChange={(value) => {
+          if (onCollapsedChange) {
+            onCollapsedChange(value === '');
+          }
+        }}
+      >
         <AccordionItem value="item-1" className="border-b border-border">
           <AccordionTrigger className="px-4 py-2 hover:no-underline bg-card/80">
             <span className="text-xs font-medium text-muted-foreground">{title}</span>
@@ -333,11 +349,11 @@ export function FileList({
             )}
             
             {/* Hide tags switch */}
-            {uniqueTags && uniqueTags.length > 0 && (
+            {uniqueTags && uniqueTags.length > 0 && onShowTagsChange && (
               <div className="flex items-center gap-2">
                 <Switch
                   checked={showTags}
-                  onCheckedChange={setShowTags}
+                  onCheckedChange={onShowTagsChange}
                   className="scale-75"
                 />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">Show tags</span>

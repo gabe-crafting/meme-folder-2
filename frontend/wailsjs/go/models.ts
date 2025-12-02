@@ -48,6 +48,26 @@ export namespace main {
 	        this.imageMemoryLimitMB = source["imageMemoryLimitMB"];
 	    }
 	}
+	export class UIState {
+	    lastPath: string;
+	    foldersCollapsed: boolean;
+	    showTags: boolean;
+	    showOnlyUntagged: boolean;
+	    sidebarOpen: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UIState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.lastPath = source["lastPath"];
+	        this.foldersCollapsed = source["foldersCollapsed"];
+	        this.showTags = source["showTags"];
+	        this.showOnlyUntagged = source["showOnlyUntagged"];
+	        this.sidebarOpen = source["sidebarOpen"];
+	    }
+	}
 
 }
 
