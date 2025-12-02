@@ -26,6 +26,10 @@ export function ListDir(arg1) {
   return window['go']['main']['App']['ListDir'](arg1);
 }
 
+export function OpenInExplorer(arg1) {
+  return window['go']['main']['App']['OpenInExplorer'](arg1);
+}
+
 export function RemoveImageTag(arg1, arg2, arg3) {
   return window['go']['main']['App']['RemoveImageTag'](arg1, arg2, arg3);
 }

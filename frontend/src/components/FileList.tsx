@@ -8,6 +8,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from '@/components/ui/context-menu';
+import { Copy, Trash2, Tag, FolderOpen, ExternalLink } from 'lucide-react';
+import { OpenInExplorer } from '../../wailsjs/go/main/App';
 
 type Props = {
   title: string;
@@ -92,6 +101,119 @@ export function FileList({
     }
   };
 
+  const handleCopyPath = (item: FileEntry) => {
+    if (folderPath) {
+      const fullPath = `${folderPath}\\${item.name}`;
+      navigator.clipboard.writeText(fullPath);
+    }
+  };
+
+  const handleCopyName = (item: FileEntry) => {
+    navigator.clipboard.writeText(item.name);
+  };
+
+  const handleOpenInExplorer = async (item: FileEntry) => {
+    if (folderPath) {
+      const fullPath = `${folderPath}\\${item.name}`;
+      try {
+        await OpenInExplorer(fullPath);
+      } catch (err) {
+        console.error('Failed to open in explorer:', err);
+      }
+    }
+  };
+
+  const renderItem = (item: FileEntry, index: number) => {
+    const isSelected = index === selectedIndex;
+    const isImage = item.type === 'image';
+    const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
+
+    const itemContent = (
+      <div
+        ref={isSelected ? selectedItemRef : null}
+        className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
+          isSelected
+            ? 'bg-primary/90 text-primary-foreground shadow-md'
+            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+        }`}
+        onClick={() => {
+          setSelectedIndex(index);
+          onItemClick(item);
+        }}
+      >
+        {/* Icon / Image preview */}
+        <div
+          className={`flex items-center justify-center mb-0.5 shrink-0 ${
+            isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
+          }`}
+        >
+          {isImage && imagePath ? (
+            <ImagePreview
+              imagePath={imagePath}
+              imageName={item.name}
+              className="w-full h-full rounded-sm border border-border"
+            />
+          ) : (
+            <span className="text-2xl leading-none">
+              {item.type === 'folder' ? '📁' : '🖼️'}
+            </span>
+          )}
+        </div>
+        {/* Name */}
+        <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
+          {item.name}
+        </span>
+      </div>
+    );
+
+    return (
+      <ContextMenu key={item.name}>
+        <ContextMenuTrigger asChild>
+          {itemContent}
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          {item.type === 'folder' ? (
+            <>
+              <ContextMenuItem onClick={() => onItemClick(item)}>
+                <FolderOpen className="mr-2 h-4 w-4" />
+                Open Folder
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => handleCopyName(item)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Name
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleCopyPath(item)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Path
+              </ContextMenuItem>
+            </>
+          ) : (
+            <>
+              <ContextMenuItem onClick={() => onItemClick(item)}>
+                <Tag className="mr-2 h-4 w-4" />
+                Open & Tag
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => void handleOpenInExplorer(item)}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open in File Explorer
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => handleCopyName(item)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Name
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleCopyPath(item)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Full Path
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
+    );
+  };
+
   // If collapsible, wrap in Accordion
   if (collapsible) {
     return (
@@ -119,50 +241,7 @@ export function FileList({
               {/* Flex layout similar to Windows 10 File Explorer medium icons */}
               <div className="p-1">
                 <div className="flex flex-wrap gap-1 justify-start">
-                  {items.map((item, index) => {
-                    const isSelected = index === selectedIndex;
-                    const isImage = item.type === 'image';
-                    const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
-
-                    return (
-                      <div
-                        key={item.name}
-                        ref={isSelected ? selectedItemRef : null}
-                        className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
-                          isSelected
-                            ? 'bg-primary/90 text-primary-foreground shadow-md'
-                            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                        onClick={() => {
-                          setSelectedIndex(index);
-                          onItemClick(item);
-                        }}
-                      >
-                        {/* Icon / Image preview */}
-                        <div
-                          className={`flex items-center justify-center mb-0.5 shrink-0 ${
-                            isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
-                          }`}
-                        >
-                          {isImage && imagePath ? (
-                            <ImagePreview
-                              imagePath={imagePath}
-                              imageName={item.name}
-                              className="w-full h-full rounded-sm border border-border"
-                            />
-                          ) : (
-                            <span className="text-2xl leading-none">
-                              {item.type === 'folder' ? '📁' : '🖼️'}
-                            </span>
-                          )}
-                        </div>
-                        {/* Name */}
-                        <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
-                          {item.name}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  {items.map((item, index) => renderItem(item, index))}
                 </div>
               </div>
             </div>
@@ -224,50 +303,7 @@ export function FileList({
         {/* Flex layout similar to Windows 10 File Explorer medium icons */}
         <div className="p-1">
           <div className="flex flex-wrap gap-1 justify-start">
-            {items.map((item, index) => {
-              const isSelected = index === selectedIndex;
-              const isImage = item.type === 'image';
-              const imagePath = folderPath ? `${folderPath}\\${item.name}` : '';
-
-              return (
-                <div
-                  key={item.name}
-                  ref={isSelected ? selectedItemRef : null}
-                  className={`flex flex-col items-center justify-start cursor-pointer rounded transition-all w-[100px] py-0.5 px-0.5 min-h-[80px] ${
-                    isSelected
-                      ? 'bg-primary/90 text-primary-foreground shadow-md'
-                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                  onClick={() => {
-                    setSelectedIndex(index);
-                    onItemClick(item);
-                  }}
-                >
-                  {/* Icon / Image preview */}
-                  <div
-                    className={`flex items-center justify-center mb-0.5 shrink-0 ${
-                      isImage ? 'w-[72px] h-[72px]' : 'w-10 h-10'
-                    }`}
-                  >
-                    {isImage && imagePath ? (
-                      <ImagePreview
-                        imagePath={imagePath}
-                        imageName={item.name}
-                        className="w-full h-full rounded-sm border border-border"
-                      />
-                    ) : (
-                      <span className="text-2xl leading-none">
-                        {item.type === 'folder' ? '📁' : '🖼️'}
-                      </span>
-                    )}
-                  </div>
-                  {/* Name */}
-                  <span className="text-xs text-center break-words w-full line-clamp-2 leading-tight">
-                    {item.name}
-                  </span>
-                </div>
-              );
-            })}
+            {items.map((item, index) => renderItem(item, index))}
           </div>
         </div>
       </div>

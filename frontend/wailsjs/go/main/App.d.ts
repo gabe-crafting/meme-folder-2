@@ -14,6 +14,8 @@ export function Greet(arg1:string):Promise<string>;
 
 export function ListDir(arg1:string):Promise<Array<main.FileEntry>>;
 
+export function OpenInExplorer(arg1:string):Promise<void>;
+
 export function RemoveImageTag(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SetImageTags(arg1:string,arg2:string,arg3:Array<string>):Promise<void>;
