@@ -10,6 +10,10 @@ export function AddImageTag(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddImageTag'](arg1, arg2, arg3);
 }
 
+export function CopyImageToClipboard(arg1) {
+  return window['go']['main']['App']['CopyImageToClipboard'](arg1);
+}
+
 export function GetAllTags(arg1) {
   return window['go']['main']['App']['GetAllTags'](arg1);
 }

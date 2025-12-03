@@ -11,10 +11,47 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const videoUrl = `/wails-image/${encodeURIComponent(videoPath.replace(/\\/g, '/'))}`;
+
+  // Handle right-click context menu
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  // Handle copy image
+  const handleCopyImage = async () => {
+    if (!thumbnail) return;
+    
+    try {
+      // Convert data URL to blob
+      const response = await fetch(thumbnail);
+      const blob = await response.blob();
+      
+      // Copy to clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      
+      setContextMenu(null);
+    } catch (err) {
+      console.error('Failed to copy image:', err);
+      setContextMenu(null);
+    }
+  };
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    if (contextMenu) {
+      const handleClick = () => setContextMenu(null);
+      window.addEventListener('click', handleClick);
+      return () => window.removeEventListener('click', handleClick);
+    }
+  }, [contextMenu]);
 
   // Intersection Observer to detect when video preview is visible
   useEffect(() => {
@@ -130,13 +167,13 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
 
   if (!isVisible) {
     return (
-      <div ref={containerRef} className={`flex items-center justify-center bg-muted min-h-[150px] ${className}`} />
+      <div ref={containerRef} className={`flex items-center justify-center bg-muted ${className}`} />
     );
   }
 
   if (error || (!thumbnail && !loading)) {
     return (
-      <div ref={containerRef} className={`relative flex items-center justify-center bg-muted min-h-[150px] ${className}`}>
+      <div ref={containerRef} className={`relative flex items-center justify-center bg-muted ${className}`}>
         <span className="text-3xl leading-none">🎬</span>
         <div className="absolute bottom-0 right-0 bg-background/80 px-1 rounded-tl text-[8px] leading-tight">
           VIDEO
@@ -146,7 +183,7 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
   }
 
   return (
-    <div ref={containerRef} className={`relative min-h-[150px] ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
           <div className="animate-spin rounded-full h-6 w-6 border-2 border-border border-t-muted-foreground"></div>
@@ -169,6 +206,7 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
             src={thumbnail}
             alt={videoName}
             className="w-full h-auto object-contain"
+            onContextMenu={handleContextMenu}
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center shadow-md">
@@ -179,6 +217,20 @@ export function VideoPreview({ videoPath, videoName, className = '' }: Props) {
             VIDEO
           </div>
         </>
+      )}
+      {/* Custom context menu */}
+      {contextMenu && (
+        <div
+          className="fixed bg-background border border-border rounded shadow-lg py-1 z-50"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            onClick={handleCopyImage}
+            className="w-full px-4 py-2 text-left text-sm hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            Copy Image
+          </button>
+        </div>
       )}
     </div>
   );

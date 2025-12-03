@@ -21,7 +21,7 @@ import {
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
 import { Copy, Trash2, Tag, FolderOpen, ExternalLink, Star } from 'lucide-react';
-import { OpenInExplorer } from '../../wailsjs/go/main/App';
+import { OpenInExplorer, CopyImageToClipboard } from '../../wailsjs/go/main/App';
 
 type Props = {
   title: string;
@@ -99,6 +99,18 @@ export function FileList({
       } catch (err) {
         console.error('Failed to open in explorer:', err);
       }
+    }
+  };
+
+  const handleCopyImage = async (item: FileEntry) => {
+    if (!folderPath) return;
+    
+    const fullPath = `${folderPath}\\${item.name}`;
+    
+    try {
+      await CopyImageToClipboard(fullPath);
+    } catch (err) {
+      console.error('Failed to copy image:', err);
     }
   };
 
@@ -248,6 +260,11 @@ export function FileList({
               <ContextMenuItem onClick={() => handleCopyPath(item)}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy Full Path
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => void handleCopyImage(item)}>
+                <Copy className="mr-2 h-4 w-4" />
+                {item.type === 'video' ? 'Copy Video File' : 'Copy Image'}
               </ContextMenuItem>
             </>
           )}

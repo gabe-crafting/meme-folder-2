@@ -6,6 +6,8 @@ export function AddFavorite(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function AddImageTag(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function CopyImageToClipboard(arg1:string):Promise<void>;
+
 export function GetAllTags(arg1:string):Promise<Record<string, Array<string>>>;
 
 export function GetFavorites():Promise<Array<main.Favorite>>;
