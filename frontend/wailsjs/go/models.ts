@@ -57,6 +57,7 @@ export namespace main {
 	    showOnlyUntagged: boolean;
 	    sidebarOpen: boolean;
 	    hideInactiveTags: boolean;
+	    tagFilterIntersect: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new UIState(source);
@@ -70,6 +71,7 @@ export namespace main {
 	        this.showOnlyUntagged = source["showOnlyUntagged"];
 	        this.sidebarOpen = source["sidebarOpen"];
 	        this.hideInactiveTags = source["hideInactiveTags"];
+	        this.tagFilterIntersect = source["tagFilterIntersect"];
 	    }
 	}
 

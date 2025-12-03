@@ -84,13 +84,18 @@ function App() {
         if (selectedTags.size > 0) {
             filtered = filtered.filter(media => {
                 const mediaTags = allTags[media.name] || [];
-                // Media must have ALL selected tags
-                return Array.from(selectedTags).every(tag => mediaTags.includes(tag));
+                if (uiState.tagFilterIntersect) {
+                    // Intersection mode: Media must have ALL selected tags
+                    return Array.from(selectedTags).every(tag => mediaTags.includes(tag));
+                } else {
+                    // Union mode: Media must have AT LEAST ONE selected tag
+                    return Array.from(selectedTags).some(tag => mediaTags.includes(tag));
+                }
             });
         }
 
         return filtered;
-    }, [allMedia, allTags, selectedTags, uiState.showOnlyUntagged]);
+    }, [allMedia, allTags, selectedTags, uiState.showOnlyUntagged, uiState.tagFilterIntersect]);
 
     const toggleTag = (tag: string) => {
         const newSelectedTags = new Set(selectedTags);
@@ -186,6 +191,10 @@ function App() {
                             showTags={isLoaded ? uiState.showTags : true}
                             onShowTagsChange={(value) => {
                                 void saveUIState({ showTags: value });
+                            }}
+                            tagFilterIntersect={isLoaded ? uiState.tagFilterIntersect : true}
+                            onTagFilterIntersectChange={(value) => {
+                                void saveUIState({ tagFilterIntersect: value });
                             }}
                             onToggleFavorite={() => {
                                 if (isFavorite(folderPath)) {

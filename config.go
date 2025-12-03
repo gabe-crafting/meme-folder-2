@@ -23,12 +23,13 @@ type Settings struct {
 
 // UIState represents the UI state to persist
 type UIState struct {
-	LastPath         string `json:"lastPath"`         // Last opened folder path
-	FoldersCollapsed bool   `json:"foldersCollapsed"` // Folders accordion state
-	ShowTags         bool   `json:"showTags"`         // Show tags switch state
-	ShowOnlyUntagged bool   `json:"showOnlyUntagged"` // Untagged only switch state
-	SidebarOpen      bool   `json:"sidebarOpen"`      // Sidebar collapsed state
-	HideInactiveTags bool   `json:"hideInactiveTags"` // Hide inactive tags in image viewer
+	LastPath           string `json:"lastPath"`           // Last opened folder path
+	FoldersCollapsed   bool   `json:"foldersCollapsed"`   // Folders accordion state
+	ShowTags           bool   `json:"showTags"`           // Show tags switch state
+	ShowOnlyUntagged   bool   `json:"showOnlyUntagged"`   // Untagged only switch state
+	SidebarOpen        bool   `json:"sidebarOpen"`        // Sidebar collapsed state
+	HideInactiveTags   bool   `json:"hideInactiveTags"`   // Hide inactive tags in image viewer
+	TagFilterIntersect bool   `json:"tagFilterIntersect"` // Tag filter mode: true = intersection (all), false = union (any)
 }
 
 // Config represents the application configuration
@@ -46,12 +47,13 @@ var defaultSettings = Settings{
 
 // Default UI state
 var defaultUIState = UIState{
-	LastPath:         "",
-	FoldersCollapsed: false,
-	ShowTags:         true,
-	ShowOnlyUntagged: false,
-	SidebarOpen:      true,
-	HideInactiveTags: false,
+	LastPath:           "",
+	FoldersCollapsed:   false,
+	ShowTags:           true,
+	ShowOnlyUntagged:   false,
+	SidebarOpen:        true,
+	HideInactiveTags:   false,
+	TagFilterIntersect: true, // Default to intersection (all tags)
 }
 
 const configFileName = "meme-folder-config.json"
@@ -282,19 +284,20 @@ func (a *App) GetUIState() (UIState, error) {
 }
 
 // SaveUIState saves the UI state
-func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyUntagged, sidebarOpen, hideInactiveTags bool) error {
+func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyUntagged, sidebarOpen, hideInactiveTags, tagFilterIntersect bool) error {
 	config, err := loadConfig()
 	if err != nil {
 		return err
 	}
 
 	config.UIState = UIState{
-		LastPath:         lastPath,
-		FoldersCollapsed: foldersCollapsed,
-		ShowTags:         showTags,
-		ShowOnlyUntagged: showOnlyUntagged,
-		SidebarOpen:      sidebarOpen,
-		HideInactiveTags: hideInactiveTags,
+		LastPath:           lastPath,
+		FoldersCollapsed:   foldersCollapsed,
+		ShowTags:           showTags,
+		ShowOnlyUntagged:   showOnlyUntagged,
+		SidebarOpen:        sidebarOpen,
+		HideInactiveTags:   hideInactiveTags,
+		TagFilterIntersect: tagFilterIntersect,
 	}
 
 	return saveConfig(config)

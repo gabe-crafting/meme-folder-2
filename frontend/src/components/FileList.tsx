@@ -52,6 +52,9 @@ type Props = {
   // Show tags
   showTags?: boolean;
   onShowTagsChange?: (value: boolean) => void;
+  // Tag filter mode (intersection vs union)
+  tagFilterIntersect?: boolean;
+  onTagFilterIntersectChange?: (value: boolean) => void;
 };
 
 export function FileList({
@@ -77,6 +80,8 @@ export function FileList({
   onToggleUntagged,
   showTags = true,
   onShowTagsChange,
+  tagFilterIntersect = true,
+  onTagFilterIntersectChange,
 }: Props) {
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
@@ -349,6 +354,18 @@ export function FileList({
                 onChange={(e) => setTagSearchQuery(e.target.value)}
                 className="h-7 w-32 text-xs"
               />
+            )}
+            
+            {/* Tag filter mode switch (Union vs Intersection) */}
+            {showTags && uniqueTags && uniqueTags.length > 0 && selectedTags && selectedTags.size > 0 && onTagFilterIntersectChange && (
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={!tagFilterIntersect}
+                  onCheckedChange={(value) => onTagFilterIntersectChange(!value)}
+                  className="scale-75"
+                />
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Union</span>
+              </div>
             )}
             
             {/* Hide tags switch */}

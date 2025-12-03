@@ -8,6 +8,7 @@ export interface UIState {
   showOnlyUntagged: boolean;
   sidebarOpen: boolean;
   hideInactiveTags: boolean;
+  tagFilterIntersect: boolean;
 }
 
 export function useUIState() {
@@ -18,6 +19,7 @@ export function useUIState() {
     showOnlyUntagged: false,
     sidebarOpen: true,
     hideInactiveTags: false,
+    tagFilterIntersect: true,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -49,7 +51,8 @@ export function useUIState() {
         updatedState.showTags,
         updatedState.showOnlyUntagged,
         updatedState.sidebarOpen,
-        updatedState.hideInactiveTags
+        updatedState.hideInactiveTags,
+        updatedState.tagFilterIntersect
       );
     } catch (err) {
       console.error('Failed to save UI state:', err);
