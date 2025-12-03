@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GetFavorites, AddFavorite, RemoveFavorite, IsFavorite } from '../../wailsjs/go/main/App';
+import { GetFavorites, AddFavorite, RemoveFavorite } from '../../wailsjs/go/main/App';
 
 export interface Favorite {
   path: string;
@@ -53,11 +53,16 @@ export function useFavorites() {
     return favorites.some(f => f.path === path);
   };
 
+  const reloadFavorites = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return {
     favorites,
     addFavorite,
     removeFavorite,
     isFavorite,
+    reloadFavorites,
   };
 }
 

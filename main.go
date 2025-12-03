@@ -67,30 +67,28 @@ func serveImageMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			// Get settings to check file size limits
-			settings, err := (&App{}).GetSettings()
-			if err != nil {
-				settings = defaultSettings
-			}
+		// Default file size limits (in MB)
+		const videoLimitMB = 10.0
+		const imageLimitMB = 20.0
 
-			// Determine file type and check size limit
-			ext := strings.ToLower(filepath.Ext(filePath))
-			fileSizeMB := float64(info.Size()) / (1024 * 1024)
-			isVideo := false
+		// Determine file type and check size limit
+		ext := strings.ToLower(filepath.Ext(filePath))
+		fileSizeMB := float64(info.Size()) / (1024 * 1024)
+		isVideo := false
 
-			switch ext {
-			case ".mp4", ".webm", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".m4v":
-				isVideo = true
-				if fileSizeMB > float64(settings.VideoMemoryLimitMB) {
-					http.Error(w, "Video file too large", http.StatusRequestEntityTooLarge)
-					return
-				}
-			case ".png", ".jpg", ".jpeg", ".jfif", ".gif", ".webp", ".bmp":
-				if fileSizeMB > float64(settings.ImageMemoryLimitMB) {
-					http.Error(w, "Image file too large", http.StatusRequestEntityTooLarge)
-					return
-				}
+		switch ext {
+		case ".mp4", ".webm", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".m4v":
+			isVideo = true
+			if fileSizeMB > videoLimitMB {
+				http.Error(w, "Video file too large", http.StatusRequestEntityTooLarge)
+				return
 			}
+		case ".png", ".jpg", ".jpeg", ".jfif", ".gif", ".webp", ".bmp":
+			if fileSizeMB > imageLimitMB {
+				http.Error(w, "Image file too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+		}
 
 			// Open and serve the file
 			file, err := os.Open(filePath)

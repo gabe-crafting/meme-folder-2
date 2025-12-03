@@ -1,71 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Settings as SettingsIcon, Folder, RotateCcw, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, RotateCcw } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { GetSettings, UpdateSettings, GetConfigPath, SetCustomConfigPath, ResetConfigPath, SelectDirectory } from '../../wailsjs/go/main/App';
+import { GetConfigPath } from '../../wailsjs/go/main/App';
 
 export interface SettingsData {
   videoMemoryLimitMB: number;
   imageMemoryLimitMB: number;
-  customConfigPath: string;
 }
 
+const SETTINGS_KEY = 'meme-folder-settings';
+
+const defaultSettings: SettingsData = {
+  videoMemoryLimitMB: 10,
+  imageMemoryLimitMB: 20,
+};
+
 export function Settings() {
-  const [settings, setSettings] = useState<SettingsData>({
-    videoMemoryLimitMB: 10,
-    imageMemoryLimitMB: 20,
-    customConfigPath: '',
-  });
-  const [tempSettings, setTempSettings] = useState<SettingsData>(settings);
+  const [settings, setSettings] = useState<SettingsData>(defaultSettings);
+  const [tempSettings, setTempSettings] = useState<SettingsData>(defaultSettings);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentConfigPath, setCurrentConfigPath] = useState<string>('');
-  const [errors, setErrors] = useState<string[]>([]);
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
-  // Load settings and config path on mount
+  // Load settings from localStorage and config path on mount
   useEffect(() => {
-    const loadSettings = async () => {
+    // Load settings from localStorage
+    try {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setSettings({ ...defaultSettings, ...parsed });
+        setTempSettings({ ...defaultSettings, ...parsed });
+      }
+    } catch (err) {
+      console.error('Failed to load settings from localStorage:', err);
+    }
+
+    // Load current config path
+    const loadConfigPath = async () => {
       try {
-        const loaded = await GetSettings();
-        setSettings(loaded);
-        setTempSettings(loaded);
-        
-        // Also load current config path
         const configPath = await GetConfigPath();
         setCurrentConfigPath(configPath);
       } catch (err) {
-        console.error('Failed to load settings:', err);
-        const errorMsg = `Failed to load settings: ${err}`;
-        setErrors(prev => [...prev, errorMsg]);
+        console.error('Failed to load config path:', err);
       }
     };
 
-    void loadSettings();
+    void loadConfigPath();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     try {
-      await UpdateSettings(tempSettings.videoMemoryLimitMB, tempSettings.imageMemoryLimitMB);
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(tempSettings));
       setSettings(tempSettings);
       setHasChanges(false);
     } catch (err) {
-      console.error('Failed to save settings:', err);
-      const errorMsg = `Failed to save settings: ${err}`;
-      setErrors(prev => [...prev, errorMsg]);
+      console.error('Failed to save settings to localStorage:', err);
     }
   };
 
@@ -74,35 +70,25 @@ export function Settings() {
     setHasChanges(false);
   };
 
-  const handleSelectConfigPath = async () => {
-    try {
-      const selected = await SelectDirectory('Select Config Directory');
-      
-      if (selected) {
-        await SetCustomConfigPath(selected);
-        const newPath = await GetConfigPath();
-        setCurrentConfigPath(newPath);
-        alert('Config location changed successfully. Please restart the app for full effect.');
-      }
-    } catch (err) {
-      console.error('Failed to set config path:', err);
-      const errorMsg = `Failed to change config location: ${err}`;
-      setErrors(prev => [...prev, errorMsg]);
-      alert('Failed to change config location: ' + err);
+  const handleResetToDefaults = () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to reset memory limits to defaults?\n\n' +
+      'This will reset:\n' +
+      '- Video Memory Limit to 10 MB\n' +
+      '- Image Memory Limit to 20 MB'
+    );
+    
+    if (!confirmed) {
+      return;
     }
-  };
-
-  const handleResetConfigPath = async () => {
+    
     try {
-      await ResetConfigPath();
-      const newPath = await GetConfigPath();
-      setCurrentConfigPath(newPath);
-      alert('Config location reset to default. Please restart the app for full effect.');
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(defaultSettings));
+      setSettings(defaultSettings);
+      setTempSettings(defaultSettings);
+      setHasChanges(false);
     } catch (err) {
-      console.error('Failed to reset config path:', err);
-      const errorMsg = `Failed to reset config location: ${err}`;
-      setErrors(prev => [...prev, errorMsg]);
-      alert('Failed to reset config location: ' + err);
+      console.error('Failed to reset settings:', err);
     }
   };
 
@@ -179,43 +165,18 @@ export function Settings() {
                 </p>
               </div>
 
-              {/* Config File Location */}
+              {/* Config File Path Display */}
               <div className="space-y-2 pt-2 border-t border-border">
                 <label className="text-xs font-medium text-muted-foreground">
                   Config File Location
                 </label>
-                <div className="space-y-2">
-                  <Input
-                    type="text"
-                    value={currentConfigPath}
-                    readOnly
-                    className="h-8 text-xs"
-                    title={currentConfigPath}
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleSelectConfigPath()}
-                      className="flex-1"
-                    >
-                      <Folder className="h-3 w-3 mr-1" />
-                      Change
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleResetConfigPath()}
-                      className="flex-1"
-                    >
-                      <RotateCcw className="h-3 w-3 mr-1" />
-                      Reset
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Change where settings, favorites, and tags are stored
-                </p>
+                <Input
+                  type="text"
+                  value={currentConfigPath}
+                  readOnly
+                  className="h-8 text-xs bg-muted cursor-default"
+                  title={currentConfigPath}
+                />
               </div>
 
               {/* Save/Cancel Buttons */}
@@ -223,7 +184,7 @@ export function Settings() {
                 <div className="flex gap-2 pt-2">
                   <Button
                     size="sm"
-                    onClick={() => void handleSave()}
+                    onClick={handleSave}
                     className="flex-1"
                   >
                     Save
@@ -238,61 +199,23 @@ export function Settings() {
                   </Button>
                 </div>
               )}
+
+              {/* Reset to Defaults */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleResetToDefaults}
+                  className="w-full"
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  Reset to Defaults
+                </Button>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      {/* Error Button */}
-      {errors.length > 0 && (
-        <div className="p-2 border-t border-sidebar-border">
-          <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-            <DialogTrigger asChild>
-              <Button
-                variant="destructive"
-                className="w-full"
-                size="sm"
-              >
-                <AlertCircle className="h-4 w-4 mr-2" />
-                {errors.length} Error{errors.length > 1 ? 's' : ''} Detected
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="text-destructive">Configuration Errors</DialogTitle>
-                <DialogDescription>
-                  The following errors occurred:
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {errors.map((error, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm"
-                  >
-                    {error}
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setErrors([])}
-                  className="flex-1"
-                >
-                  Clear Errors
-                </Button>
-                <Button
-                  onClick={() => setShowErrorDialog(false)}
-                  className="flex-1"
-                >
-                  Close
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
     </div>
   );
 }

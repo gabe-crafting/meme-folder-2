@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { GetUIState, SaveUIState } from '../../wailsjs/go/main/App';
 
 export interface UIState {
   lastPath: string;
@@ -11,51 +10,46 @@ export interface UIState {
   tagFilterIntersect: boolean;
 }
 
+const UI_STATE_KEY = 'meme-folder-ui-state';
+
+const defaultUIState: UIState = {
+  lastPath: '',
+  foldersCollapsed: false,
+  showTags: true,
+  showOnlyUntagged: false,
+  sidebarOpen: true,
+  hideInactiveTags: false,
+  tagFilterIntersect: true,
+};
+
 export function useUIState() {
-  const [uiState, setUIState] = useState<UIState>({
-    lastPath: '',
-    foldersCollapsed: false,
-    showTags: true,
-    showOnlyUntagged: false,
-    sidebarOpen: true,
-    hideInactiveTags: false,
-    tagFilterIntersect: true,
-  });
+  const [uiState, setUIState] = useState<UIState>(defaultUIState);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load UI state on mount
+  // Load UI state from localStorage on mount
   useEffect(() => {
-    const loadUIState = async () => {
-      try {
-        const loaded = await GetUIState();
-        setUIState(loaded);
-        setIsLoaded(true);
-      } catch (err) {
-        console.error('Failed to load UI state:', err);
-        setIsLoaded(true);
+    try {
+      const stored = localStorage.getItem(UI_STATE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUIState({ ...defaultUIState, ...parsed });
       }
-    };
-
-    void loadUIState();
+    } catch (err) {
+      console.error('Failed to load UI state from localStorage:', err);
+    } finally {
+      setIsLoaded(true);
+    }
   }, []);
 
-  // Save UI state (debounced to avoid too many writes)
-  const saveUIState = async (newState: Partial<UIState>) => {
+  // Save UI state to localStorage
+  const saveUIState = (newState: Partial<UIState>) => {
     const updatedState = { ...uiState, ...newState };
     setUIState(updatedState);
 
     try {
-      await SaveUIState(
-        updatedState.lastPath,
-        updatedState.foldersCollapsed,
-        updatedState.showTags,
-        updatedState.showOnlyUntagged,
-        updatedState.sidebarOpen,
-        updatedState.hideInactiveTags,
-        updatedState.tagFilterIntersect
-      );
+      localStorage.setItem(UI_STATE_KEY, JSON.stringify(updatedState));
     } catch (err) {
-      console.error('Failed to save UI state:', err);
+      console.error('Failed to save UI state to localStorage:', err);
     }
   };
 

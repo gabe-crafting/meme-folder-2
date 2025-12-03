@@ -34,46 +34,6 @@ export namespace main {
 	        this.modified = source["modified"];
 	    }
 	}
-	export class Settings {
-	    videoMemoryLimitMB: number;
-	    imageMemoryLimitMB: number;
-	    customConfigPath: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Settings(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.videoMemoryLimitMB = source["videoMemoryLimitMB"];
-	        this.imageMemoryLimitMB = source["imageMemoryLimitMB"];
-	        this.customConfigPath = source["customConfigPath"];
-	    }
-	}
-	export class UIState {
-	    lastPath: string;
-	    foldersCollapsed: boolean;
-	    showTags: boolean;
-	    showOnlyUntagged: boolean;
-	    sidebarOpen: boolean;
-	    hideInactiveTags: boolean;
-	    tagFilterIntersect: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new UIState(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.lastPath = source["lastPath"];
-	        this.foldersCollapsed = source["foldersCollapsed"];
-	        this.showTags = source["showTags"];
-	        this.showOnlyUntagged = source["showOnlyUntagged"];
-	        this.sidebarOpen = source["sidebarOpen"];
-	        this.hideInactiveTags = source["hideInactiveTags"];
-	        this.tagFilterIntersect = source["tagFilterIntersect"];
-	    }
-	}
 
 }
 

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ListDir, GetHomeDirectory, GetUIState } from "../../wailsjs/go/main/App";
+import { ListDir, GetHomeDirectory } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
 
 export type FileEntry = main.FileEntry;
+
+const UI_STATE_KEY = 'meme-folder-ui-state';
 
 export function useFolderBrowser(initialPath?: string) {
   const [folderPath, setFolderPath] = useState(initialPath || '');
@@ -69,13 +71,16 @@ export function useFolderBrowser(initialPath?: string) {
     const initializeFolder = async () => {
       let pathToLoad = initialPath;
       
-      // If no initial path provided, try to get last path from UI state
+      // If no initial path provided, try to get last path from localStorage
       if (!pathToLoad) {
         try {
-          const uiState = await GetUIState();
-          pathToLoad = uiState.lastPath;
+          const stored = localStorage.getItem(UI_STATE_KEY);
+          if (stored) {
+            const uiState = JSON.parse(stored);
+            pathToLoad = uiState.lastPath;
+          }
         } catch (err) {
-          console.error('Failed to get UI state:', err);
+          console.error('Failed to get UI state from localStorage:', err);
         }
       }
 

@@ -3,7 +3,8 @@ import { useFolderBrowser } from './hooks/useFolderBrowser';
 import { useFavorites } from './hooks/useFavorites';
 import { useUIState } from './hooks/useUIState';
 import { PathBar } from './components/PathBar';
-import { FileList } from './components/FileList';
+import { FolderList } from './components/FolderList';
+import { MediaList } from './components/MediaList';
 import { ImageViewer } from './components/ImageViewer';
 import { Sidebar } from './components/Sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -107,6 +108,7 @@ function App() {
         setSelectedTags(newSelectedTags);
     };
 
+
     // Save last path when it changes
     useEffect(() => {
         if (isLoaded && folderPath) {
@@ -142,7 +144,7 @@ function App() {
 
                     {/* File lists: folders above, images below */}
                     <div className="flex-1 flex flex-col min-h-0">
-                        <FileList
+                        <FolderList
                             title="Folders"
                             items={[
                                 // Synthetic parent entry for "cd .."
@@ -156,7 +158,6 @@ function App() {
                             ]}
                             loading={loading}
                             error={error}
-                            collapsible={true}
                             defaultCollapsed={isLoaded ? uiState.foldersCollapsed : false}
                             onCollapsedChange={(collapsed) => {
                                 void saveUIState({ foldersCollapsed: collapsed });
@@ -173,7 +174,7 @@ function App() {
                             }}
                         />
                         <div className="border-t border-border" />
-                        <FileList
+                        <MediaList
                             title="Media"
                             items={filteredMedia}
                             loading={loading}
@@ -183,7 +184,6 @@ function App() {
                             selectedTags={selectedTags}
                             onToggleTag={toggleTag}
                             totalItemCount={allMedia.length}
-                            allTags={allTags}
                             showOnlyUntagged={isLoaded ? uiState.showOnlyUntagged : false}
                             onToggleUntagged={(value) => {
                                 void saveUIState({ showOnlyUntagged: value });

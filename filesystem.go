@@ -26,16 +26,12 @@ func (a *App) ListDir(path string) ([]FileEntry, error) {
 		return nil, err
 	}
 
-	// Get settings for file size limits
-	settings, err := a.GetSettings()
-	if err != nil {
-		// Use defaults if settings can't be loaded
-		settings.VideoMemoryLimitMB = 10
-		settings.ImageMemoryLimitMB = 20
-	}
+	// Default file size limits (in MB)
+	const videoLimitMB = 10
+	const imageLimitMB = 20
 
-	videoLimitBytes := int64(settings.VideoMemoryLimitMB) * 1024 * 1024
-	imageLimitBytes := int64(settings.ImageMemoryLimitMB) * 1024 * 1024
+	videoLimitBytes := int64(videoLimitMB) * 1024 * 1024
+	imageLimitBytes := int64(imageLimitMB) * 1024 * 1024
 
 	// Initialise as empty slice so it serialises as [] instead of null
 	result := make([]FileEntry, 0)
