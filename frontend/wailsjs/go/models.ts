@@ -37,6 +37,7 @@ export namespace main {
 	export class Settings {
 	    videoMemoryLimitMB: number;
 	    imageMemoryLimitMB: number;
+	    customConfigPath: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -46,6 +47,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.videoMemoryLimitMB = source["videoMemoryLimitMB"];
 	        this.imageMemoryLimitMB = source["imageMemoryLimitMB"];
+	        this.customConfigPath = source["customConfigPath"];
 	    }
 	}
 	export class UIState {

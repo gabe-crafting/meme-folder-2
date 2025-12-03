@@ -10,6 +10,10 @@ export function CopyImageToClipboard(arg1:string):Promise<void>;
 
 export function GetAllTags(arg1:string):Promise<Record<string, Array<string>>>;
 
+export function GetConfigPath():Promise<string>;
+
+export function GetDefaultConfigDir():Promise<string>;
+
 export function GetFavorites():Promise<Array<main.Favorite>>;
 
 export function GetHomeDirectory():Promise<string>;
@@ -34,7 +38,13 @@ export function RemoveFavorite(arg1:string):Promise<void>;
 
 export function RemoveImageTag(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function ResetConfigPath():Promise<void>;
+
 export function SaveUIState(arg1:string,arg2:boolean,arg3:boolean,arg4:boolean,arg5:boolean):Promise<void>;
+
+export function SelectDirectory(arg1:string):Promise<string>;
+
+export function SetCustomConfigPath(arg1:string):Promise<void>;
 
 export function SetImageTags(arg1:string,arg2:string,arg3:Array<string>):Promise<void>;
 

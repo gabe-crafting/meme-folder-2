@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -15,8 +16,9 @@ type Favorite struct {
 
 // Settings represents application settings
 type Settings struct {
-	VideoMemoryLimitMB int `json:"videoMemoryLimitMB"` // Max MB per video (default 10, max 50)
-	ImageMemoryLimitMB int `json:"imageMemoryLimitMB"` // Max MB per image (default 20, max 100)
+	VideoMemoryLimitMB int    `json:"videoMemoryLimitMB"` // Max MB per video (default 10, max 50)
+	ImageMemoryLimitMB int    `json:"imageMemoryLimitMB"` // Max MB per image (default 20, max 100)
+	CustomConfigPath   string `json:"customConfigPath"`   // Custom location for config files (empty = use default)
 }
 
 // UIState represents the UI state to persist
@@ -51,22 +53,46 @@ var defaultUIState = UIState{
 }
 
 const configFileName = "meme-folder-config.json"
+const configLocationFile = "config-location.txt"
+
+// getDefaultConfigDir returns the default config directory
+func getDefaultConfigDir() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user config directory: %w", err)
+	}
+	return filepath.Join(configDir, "meme-folder"), nil
+}
 
 // getConfigPath returns the path to the config file
 func getConfigPath() (string, error) {
-	// Get user config directory
-	configDir, err := os.UserConfigDir()
+	// Get default config directory
+	defaultConfigDir, err := getDefaultConfigDir()
 	if err != nil {
 		return "", err
 	}
 
-	// Create app-specific directory
-	appConfigDir := filepath.Join(configDir, "meme-folder")
-	if err := os.MkdirAll(appConfigDir, 0755); err != nil {
-		return "", err
+	// Ensure default directory exists (needed for pointer file)
+	if err := os.MkdirAll(defaultConfigDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create config directory %s: %w", defaultConfigDir, err)
 	}
 
-	return filepath.Join(appConfigDir, configFileName), nil
+	// Check if there's a custom location pointer file
+	locationFile := filepath.Join(defaultConfigDir, configLocationFile)
+	if data, err := os.ReadFile(locationFile); err == nil {
+		customPath := string(data)
+		if customPath != "" {
+			// Use custom location
+			customConfigDir := filepath.Clean(customPath)
+			if err := os.MkdirAll(customConfigDir, 0755); err != nil {
+				return "", fmt.Errorf("failed to create custom config directory %s: %w", customConfigDir, err)
+			}
+			return filepath.Join(customConfigDir, configFileName), nil
+		}
+	}
+
+	// Use default location
+	return filepath.Join(defaultConfigDir, configFileName), nil
 }
 
 // loadConfig loads the configuration from disk
@@ -269,4 +295,91 @@ func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyU
 	}
 
 	return saveConfig(config)
+}
+
+// GetConfigPath returns the config file path for diagnostics
+func (a *App) GetConfigPath() (string, error) {
+	return getConfigPath()
+}
+
+// GetDefaultConfigDir returns the default config directory path
+func (a *App) GetDefaultConfigDir() (string, error) {
+	return getDefaultConfigDir()
+}
+
+// SetCustomConfigPath changes the config file location
+func (a *App) SetCustomConfigPath(newPath string) error {
+	// Get current config
+	currentConfig, err := loadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load current config: %w", err)
+	}
+
+	// Get current config file path
+	oldConfigPath, err := getConfigPath()
+	if err != nil {
+		return fmt.Errorf("failed to get current config path: %w", err)
+	}
+
+	// Clean and validate new path
+	newPath = filepath.Clean(newPath)
+	if newPath == "" {
+		return fmt.Errorf("config path cannot be empty")
+	}
+
+	// Create new directory if it doesn't exist
+	if err := os.MkdirAll(newPath, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", newPath, err)
+	}
+
+	// Get default config directory for pointer file
+	defaultConfigDir, err := getDefaultConfigDir()
+	if err != nil {
+		return fmt.Errorf("failed to get default config directory: %w", err)
+	}
+
+	// Write new location to pointer file
+	locationFile := filepath.Join(defaultConfigDir, configLocationFile)
+	if err := os.WriteFile(locationFile, []byte(newPath), 0644); err != nil {
+		return fmt.Errorf("failed to write location pointer file: %w", err)
+	}
+
+	// Write config to new location
+	newConfigPath := filepath.Join(newPath, configFileName)
+	if err := saveConfig(currentConfig); err != nil {
+		return fmt.Errorf("failed to save config to new location: %w", err)
+	}
+
+	// Optionally remove old config file if it's different location
+	if oldConfigPath != newConfigPath {
+		_ = os.Remove(oldConfigPath) // Ignore error, it's just cleanup
+	}
+
+	return nil
+}
+
+// ResetConfigPath resets the config location back to default
+func (a *App) ResetConfigPath() error {
+	// Get current config
+	currentConfig, err := loadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load current config: %w", err)
+	}
+
+	// Get default config directory
+	defaultConfigDir, err := getDefaultConfigDir()
+	if err != nil {
+		return err
+	}
+
+	// Remove pointer file to use default location
+	locationFile := filepath.Join(defaultConfigDir, configLocationFile)
+	_ = os.Remove(locationFile) // Ignore error if file doesn't exist
+
+	// Save config to default location
+	if err := saveConfig(currentConfig); err != nil {
+		return fmt.Errorf("failed to save config to default location: %w", err)
+	}
+
+	return nil
 }

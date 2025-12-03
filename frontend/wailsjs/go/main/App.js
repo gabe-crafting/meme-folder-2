@@ -18,6 +18,14 @@ export function GetAllTags(arg1) {
   return window['go']['main']['App']['GetAllTags'](arg1);
 }
 
+export function GetConfigPath() {
+  return window['go']['main']['App']['GetConfigPath']();
+}
+
+export function GetDefaultConfigDir() {
+  return window['go']['main']['App']['GetDefaultConfigDir']();
+}
+
 export function GetFavorites() {
   return window['go']['main']['App']['GetFavorites']();
 }
@@ -66,8 +74,20 @@ export function RemoveImageTag(arg1, arg2, arg3) {
   return window['go']['main']['App']['RemoveImageTag'](arg1, arg2, arg3);
 }
 
+export function ResetConfigPath() {
+  return window['go']['main']['App']['ResetConfigPath']();
+}
+
 export function SaveUIState(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SaveUIState'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function SelectDirectory(arg1) {
+  return window['go']['main']['App']['SelectDirectory'](arg1);
+}
+
+export function SetCustomConfigPath(arg1) {
+  return window['go']['main']['App']['SetCustomConfigPath'](arg1);
 }
 
 export function SetImageTags(arg1, arg2, arg3) {
