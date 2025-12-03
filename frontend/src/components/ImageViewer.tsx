@@ -168,12 +168,16 @@ export function ImageViewer({
         onNext();
       } else if (e.key === 'ArrowLeft' && hasPrevious && onPrevious) {
         onPrevious();
+      } else if (e.key === 'c' && e.ctrlKey) {
+        // Ctrl+C to copy image/video
+        e.preventDefault();
+        void handleCopyImageClick();
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [onClose, onNext, onPrevious, hasNext, hasPrevious]);
+  }, [onClose, onNext, onPrevious, hasNext, hasPrevious, folderPath, imageName]);
 
   return (
     <div className="w-full h-full bg-background flex flex-col overflow-hidden">
