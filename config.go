@@ -28,6 +28,7 @@ type UIState struct {
 	ShowTags         bool   `json:"showTags"`         // Show tags switch state
 	ShowOnlyUntagged bool   `json:"showOnlyUntagged"` // Untagged only switch state
 	SidebarOpen      bool   `json:"sidebarOpen"`      // Sidebar collapsed state
+	HideInactiveTags bool   `json:"hideInactiveTags"` // Hide inactive tags in image viewer
 }
 
 // Config represents the application configuration
@@ -50,6 +51,7 @@ var defaultUIState = UIState{
 	ShowTags:         true,
 	ShowOnlyUntagged: false,
 	SidebarOpen:      true,
+	HideInactiveTags: false,
 }
 
 const configFileName = "meme-folder-config.json"
@@ -280,7 +282,7 @@ func (a *App) GetUIState() (UIState, error) {
 }
 
 // SaveUIState saves the UI state
-func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyUntagged, sidebarOpen bool) error {
+func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyUntagged, sidebarOpen, hideInactiveTags bool) error {
 	config, err := loadConfig()
 	if err != nil {
 		return err
@@ -292,6 +294,7 @@ func (a *App) SaveUIState(lastPath string, foldersCollapsed, showTags, showOnlyU
 		ShowTags:         showTags,
 		ShowOnlyUntagged: showOnlyUntagged,
 		SidebarOpen:      sidebarOpen,
+		HideInactiveTags: hideInactiveTags,
 	}
 
 	return saveConfig(config)

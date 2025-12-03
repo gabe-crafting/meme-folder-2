@@ -40,7 +40,7 @@ export function RemoveImageTag(arg1:string,arg2:string,arg3:string):Promise<void
 
 export function ResetConfigPath():Promise<void>;
 
-export function SaveUIState(arg1:string,arg2:boolean,arg3:boolean,arg4:boolean,arg5:boolean):Promise<void>;
+export function SaveUIState(arg1:string,arg2:boolean,arg3:boolean,arg4:boolean,arg5:boolean,arg6:boolean):Promise<void>;
 
 export function SelectDirectory(arg1:string):Promise<string>;
 

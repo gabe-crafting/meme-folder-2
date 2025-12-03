@@ -7,6 +7,8 @@ import { FileList } from './components/FileList';
 import { ImageViewer } from './components/ImageViewer';
 import { Sidebar } from './components/Sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { FileEntry } from './hooks/useFolderBrowser';
 import { GetAllTags } from '../wailsjs/go/main/App';
 
@@ -107,33 +109,6 @@ function App() {
         }
     }, [folderPath, isLoaded, saveUIState]);
 
-    // If a media item is selected, show the viewer
-    if (selectedImage) {
-        const currentMediaIndex = filteredMedia.findIndex(item => item.name === selectedImage.name);
-        const mediaPath = `${folderPath}\\${selectedImage.name}`;
-
-        return (
-            <ImageViewer
-                imagePath={mediaPath}
-                imageName={selectedImage.name}
-                folderPath={folderPath}
-                mediaType={selectedImage.type}
-                onClose={() => setSelectedImage(null)}
-                onNext={currentMediaIndex < filteredMedia.length - 1 
-                    ? () => setSelectedImage(filteredMedia[currentMediaIndex + 1])
-                    : undefined
-                }
-                onPrevious={currentMediaIndex > 0
-                    ? () => setSelectedImage(filteredMedia[currentMediaIndex - 1])
-                    : undefined
-                }
-                hasNext={currentMediaIndex < filteredMedia.length - 1}
-                hasPrevious={currentMediaIndex > 0}
-                onTagsChanged={handleTagsChanged}
-            />
-        );
-    }
-
     return (
         <SidebarProvider>
             <div className="min-h-screen w-full flex bg-background text-foreground">
@@ -227,6 +202,47 @@ function App() {
                     </div>
                 </SidebarInset>
             </div>
+
+            {/* Image Viewer Dialog */}
+            <Dialog open={selectedImage !== null} onOpenChange={(open) => !open && setSelectedImage(null)}>
+                <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 overflow-hidden">
+                    <VisuallyHidden>
+                        <DialogTitle>{selectedImage?.name || 'Media Viewer'}</DialogTitle>
+                        <DialogDescription>
+                            View and tag {selectedImage?.type === 'video' ? 'video' : 'image'}
+                        </DialogDescription>
+                    </VisuallyHidden>
+                    {selectedImage && (() => {
+                        const currentMediaIndex = filteredMedia.findIndex(item => item.name === selectedImage.name);
+                        const mediaPath = `${folderPath}\\${selectedImage.name}`;
+
+                        return (
+                            <ImageViewer
+                                imagePath={mediaPath}
+                                imageName={selectedImage.name}
+                                folderPath={folderPath}
+                                mediaType={selectedImage.type}
+                                onClose={() => setSelectedImage(null)}
+                                onNext={currentMediaIndex < filteredMedia.length - 1 
+                                    ? () => setSelectedImage(filteredMedia[currentMediaIndex + 1])
+                                    : undefined
+                                }
+                                onPrevious={currentMediaIndex > 0
+                                    ? () => setSelectedImage(filteredMedia[currentMediaIndex - 1])
+                                    : undefined
+                                }
+                                hasNext={currentMediaIndex < filteredMedia.length - 1}
+                                hasPrevious={currentMediaIndex > 0}
+                                onTagsChanged={handleTagsChanged}
+                                hideInactiveTags={isLoaded ? uiState.hideInactiveTags : false}
+                                onHideInactiveTagsChange={(value) => {
+                                    void saveUIState({ hideInactiveTags: value });
+                                }}
+                            />
+                        );
+                    })()}
+                </DialogContent>
+            </Dialog>
         </SidebarProvider>
     );
 }

@@ -7,6 +7,7 @@ export interface UIState {
   showTags: boolean;
   showOnlyUntagged: boolean;
   sidebarOpen: boolean;
+  hideInactiveTags: boolean;
 }
 
 export function useUIState() {
@@ -16,6 +17,7 @@ export function useUIState() {
     showTags: true,
     showOnlyUntagged: false,
     sidebarOpen: true,
+    hideInactiveTags: false,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -46,7 +48,8 @@ export function useUIState() {
         updatedState.foldersCollapsed,
         updatedState.showTags,
         updatedState.showOnlyUntagged,
-        updatedState.sidebarOpen
+        updatedState.sidebarOpen,
+        updatedState.hideInactiveTags
       );
     } catch (err) {
       console.error('Failed to save UI state:', err);

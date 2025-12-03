@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { GetImageTags, AddImageTag, RemoveImageTag, GetAllTags } from '../../wailsjs/go/main/App';
+import { Switch } from '@/components/ui/switch';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from '@/components/ui/context-menu';
+import { ChevronLeft, ChevronRight, Plus, Copy, ExternalLink } from 'lucide-react';
+import { GetImageTags, AddImageTag, RemoveImageTag, GetAllTags, OpenInExplorer, CopyImageToClipboard } from '../../wailsjs/go/main/App';
+import { TagList } from './TagList';
 
 type Props = {
   imagePath: string;
@@ -16,6 +24,8 @@ type Props = {
   hasNext: boolean;
   hasPrevious: boolean;
   onTagsChanged?: () => void; // Callback to notify parent of tag changes
+  hideInactiveTags: boolean;
+  onHideInactiveTagsChange: (value: boolean) => void;
 };
 
 export function ImageViewer({
@@ -29,6 +39,8 @@ export function ImageViewer({
   hasNext,
   hasPrevious,
   onTagsChanged,
+  hideInactiveTags,
+  onHideInactiveTagsChange,
 }: Props) {
   const mediaUrl = `/wails-image/${encodeURIComponent(imagePath.replace(/\\/g, '/'))}`;
   const isVideo = mediaType === 'video';
@@ -72,7 +84,28 @@ export function ImageViewer({
     void loadAllTags();
   }, [folderPath]);
 
-  const handleAddTag = async () => {
+  const handleToggleTag = async (tag: string) => {
+    const isActive = tags.includes(tag);
+    
+    try {
+      if (isActive) {
+        // Remove tag
+        await RemoveImageTag(folderPath, imageName, tag);
+        setTags(tags.filter(t => t !== tag));
+      } else {
+        // Add tag
+        await AddImageTag(folderPath, imageName, tag);
+        setTags([...tags, tag]);
+      }
+      
+      // Notify parent of tag change
+      onTagsChanged?.();
+    } catch (err) {
+      console.error('Failed to toggle tag:', err);
+    }
+  };
+
+  const handleAddNewTag = async () => {
     const tag = newTag.trim();
     if (!tag) return;
 
@@ -93,22 +126,37 @@ export function ImageViewer({
     }
   };
 
-  const handleRemoveTag = async (tagToRemove: string) => {
-    try {
-      await RemoveImageTag(folderPath, imageName, tagToRemove);
-      setTags(tags.filter(tag => tag !== tagToRemove));
-      
-      // Notify parent of tag change
-      onTagsChanged?.();
-    } catch (err) {
-      console.error('Failed to remove tag:', err);
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      void handleAddTag();
+      void handleAddNewTag();
+    }
+  };
+
+  const handleCopyName = () => {
+    navigator.clipboard.writeText(imageName);
+  };
+
+  const handleCopyPath = () => {
+    const fullPath = `${folderPath}\\${imageName}`;
+    navigator.clipboard.writeText(fullPath);
+  };
+
+  const handleOpenInExplorerClick = async () => {
+    const fullPath = `${folderPath}\\${imageName}`;
+    try {
+      await OpenInExplorer(fullPath);
+    } catch (err) {
+      console.error('Failed to open in explorer:', err);
+    }
+  };
+
+  const handleCopyImageClick = async () => {
+    const fullPath = `${folderPath}\\${imageName}`;
+    try {
+      await CopyImageToClipboard(fullPath);
+    } catch (err) {
+      console.error('Failed to copy image:', err);
     }
   };
 
@@ -128,29 +176,21 @@ export function ImageViewer({
   }, [onClose, onNext, onPrevious, hasNext, hasPrevious]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="w-full h-full bg-background flex flex-col overflow-hidden">
       {/* Top bar */}
-      <div className="flex flex-col gap-3 px-4 py-3 border-b border-border bg-card">
-        {/* Title and Close Button */}
+      <div className="flex-none flex flex-col gap-3 px-4 py-3 border-b border-border bg-card">
+        {/* Title */}
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium truncate flex-1 mr-4">{imageName}</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            title="Close (Esc)"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <h2 className="text-sm font-medium truncate flex-1">{imageName}</h2>
         </div>
 
         {/* Tags Section */}
         <div className="flex flex-col gap-2">
-          {/* Add Tag Input */}
+          {/* Add New Tag Input */}
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="Add a tag..."
+              placeholder="Add new tag..."
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -158,69 +198,46 @@ export function ImageViewer({
               disabled={isLoadingTags}
             />
             <Button
-              onClick={() => void handleAddTag()}
+              onClick={() => void handleAddNewTag()}
               disabled={!newTag.trim() || isLoadingTags}
               size="icon"
-              title="Add tag"
+              title="Add new tag"
             >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Display Current Image Tags */}
-          {tags.length > 0 && (
+          {/* Display All Tags (unified) */}
+          {allFolderTags.length > 0 && (
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Tags on this image:</span>
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                    onClick={() => void handleRemoveTag(tag)}
-                    title="Click to remove"
-                  >
-                    {tag}
-                    <X className="ml-1 h-3 w-3" />
-                  </Badge>
-                ))}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Tags (green = active, click to toggle):
+                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">
+                    Hide inactive
+                  </label>
+                  <Switch
+                    checked={hideInactiveTags}
+                    onCheckedChange={onHideInactiveTagsChange}
+                  />
+                </div>
               </div>
+              <TagList
+                allFolderTags={allFolderTags}
+                tags={tags}
+                newTag={newTag}
+                hideInactiveTags={hideInactiveTags}
+                onToggleTag={handleToggleTag}
+              />
             </div>
           )}
 
-          {/* Display All Available Tags */}
-          {allFolderTags.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">All tags (click to add):</span>
-              <div className="flex flex-wrap gap-1.5">
-                {allFolderTags
-                  .filter(tag => !tags.includes(tag)) // Only show tags not already on image
-                  .filter(tag => 
-                    newTag === '' || 
-                    tag.toLowerCase().includes(newTag.toLowerCase())
-                  ) // Filter by input text
-                  .map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                      onClick={async () => {
-                        try {
-                          await AddImageTag(folderPath, imageName, tag);
-                          setTags([...tags, tag]);
-                          setNewTag(''); // Clear input after adding
-                          onTagsChanged?.();
-                        } catch (err) {
-                          console.error('Failed to add tag:', err);
-                        }
-                      }}
-                      title="Click to add this tag"
-                    >
-                      {tag}
-                      <Plus className="ml-1 h-3 w-3" />
-                    </Badge>
-                  ))}
-              </div>
+          {/* Show message if no tags exist */}
+          {allFolderTags.length === 0 && !isLoadingTags && (
+            <div className="text-xs text-muted-foreground">
+              No tags yet. Add one above!
             </div>
           )}
         </div>
@@ -228,24 +245,48 @@ export function ImageViewer({
 
       {/* Media container */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
-        {isVideo ? (
-          <video
-            src={mediaUrl}
-            controls
-            autoPlay
-            loop
-            className="w-full h-full"
-            style={{ objectFit: 'contain' }}
-          >
-            Your browser does not support the video tag.
-          </video>
-        ) : (
-          <img
-            src={mediaUrl}
-            alt={imageName}
-            className="w-full h-full object-contain"
-          />
-        )}
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            {isVideo ? (
+              <video
+                src={mediaUrl}
+                controls
+                autoPlay
+                loop
+                className="w-full h-full"
+                style={{ objectFit: 'contain' }}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <img
+                src={mediaUrl}
+                alt={imageName}
+                className="w-full h-full object-contain"
+              />
+            )}
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={handleOpenInExplorerClick}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open in File Explorer
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={handleCopyName}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Name
+            </ContextMenuItem>
+            <ContextMenuItem onClick={handleCopyPath}>
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Full Path
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => void handleCopyImageClick()}>
+              <Copy className="mr-2 h-4 w-4" />
+              {isVideo ? 'Copy Video File' : 'Copy Image'}
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
 
         {/* Navigation buttons */}
         {hasPrevious && onPrevious && (

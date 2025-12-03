@@ -56,6 +56,7 @@ export namespace main {
 	    showTags: boolean;
 	    showOnlyUntagged: boolean;
 	    sidebarOpen: boolean;
+	    hideInactiveTags: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new UIState(source);
@@ -68,6 +69,7 @@ export namespace main {
 	        this.showTags = source["showTags"];
 	        this.showOnlyUntagged = source["showOnlyUntagged"];
 	        this.sidebarOpen = source["sidebarOpen"];
+	        this.hideInactiveTags = source["hideInactiveTags"];
 	    }
 	}
 
