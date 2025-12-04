@@ -31,9 +31,9 @@ Eventual solution:
 - Switch to the Qt framework
 
 Windows Defender Exclusion (because the app it's using the terminal for clipboard):
-Open Windows Security
-Virus & threat protection → Manage settings
-Scroll down to Exclusions → Add or remove exclusions
-Click Add an exclusion → Folder
-Add your entire project folder: C:\Users\gabe\projects\meme-folder-\
+1. Open Windows Security
+2. Virus & threat protection → Manage settings
+3. Scroll down to Exclusions → Add or remove exclusions
+4. Click Add an exclusion → Folder
+5. Add your entire project folder: C:\Users\gabe\projects\meme-folder-\
 This tells Defender to ignore everything in that folder.
