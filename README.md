@@ -1,29 +1,29 @@
-# Meme-folder
-This was meant to be a video, gif, image - gallery viewer displayed in a nice way (mansonry) in which you can organize photos by tags
-You can easely check and remove tags from each photo and search them by tags. 
-You can use union search which will display all images that has at least one checked tags.
-If uncheck will display all the images/videos/gifs that have checked tags (this is the main feature I wanted and couldn't find somewhere else)
+# Meme-Folder
+Meme-Folder is designed to be a clean, easy-to-use gallery viewer for videos, GIFs, and images (displayed in a masonry layout). It lets you organize your media using tags and quickly filter or manage them.
+
+You can easily add or remove tags from any photo and search using those tags. The app supports union search, which displays all items that contain at least one of the selected tags. If you toggle off union search, it will display only the items that contain all selected tags — the main feature I wanted but couldn’t find anywhere else.
 
 <img width="1000" height="755" alt="image" src="https://github.com/user-attachments/assets/3f844693-a38f-4b39-9705-e84b418dfcc2" />
 <img width="1010" height="761" alt="image" src="https://github.com/user-attachments/assets/f3b13235-1302-41fb-8071-92720c53c54b" />
 
 Known bugs
-- some times videos are cliping because of react loading library
+- Sometimes videos stutter or clip due to the React loading library.
 
 Planned features
-- better path input interface
-  - open file button will open a folder via windows explorer interface
-  - pathing will be display in a more nicely form (probably a breadcrumb)
-- Register it to microsoft so the antivirus won't yell
-- You can add a photo from a link and will download it automatically in that folder
-- You can drag and drop images in the folder you are into
-- hide option on each image, settings will have an option capable to display hidden images
-- option to merge all favorite folder into one big view
-- ai integration that scans and gives tags sugestions
+- Improved path-input interface:
+  - “Open file” button that opens a folder using the Windows Explorer dialog
+  - Cleaner path display (likely using breadcrumbs)
+- App registration with Microsoft so antivirus warnings stop appearing
+- Ability to add a photo from a URL and have it automatically downloaded into the selected folder
+- Drag-and-drop support for adding images directly into the current folder
+- “Hide” option for each image, along with a setting to toggle visibility of hidden items
+- Option to merge all “favorite” folders into a single unified view
+- AI integration to scan media and suggest tags automatically
 
 Annoying stuff that i'm still trying to find solutions for
-- Wails loads are the file in the server that serves them which is a lot of processing power for big files. That's why the limitation.
+- Wails currently loads all files through the server layer, which uses a lot of processing power for large files. This creates limitations.
+
 Eventual solution:
-- move to tauri that is using assets protocol, but I don't like rust
-- wait for wails to implement assets protocol
-- move to qt-framework
+- Migrate to Tauri, which uses the assets protocol (though I’m not a fan of Rust)
+- Wait for Wails to add support for the assets protocol
+- Switch to the Qt framework
