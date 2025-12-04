@@ -20,3 +20,10 @@ Planned features
 - hide option on each image, settings will have an option capable to display hidden images
 - option to merge all favorite folder into one big view
 - ai integration that scans and gives tags sugestions
+
+Annoying stuff that i'm still trying to find solutions for
+- Wails loads are the file in the server that serves them which is a lot of processing power for big files. That's why the limitation.
+Eventual solution:
+- move to tauri that is using assets protocol, but I don't like rust
+- wait for wails to implement assets protocol
+- move to qt-framework
